@@ -1,5 +1,6 @@
-const BASE_URL = "http://192.168.0.46:8000";
+const BASE_URL = "http://192.168.1.40:8000";
 
+// Función base que todas las demás usan internamente
 const request = async (method, path, body = null, token = null) => {
   const headers = { "Content-Type": "application/json" };
 
@@ -17,6 +18,7 @@ const request = async (method, path, body = null, token = null) => {
   const data = await response.json();
 
   if (!response.ok) {
+    // El backend manda el error en data.detail
     throw new Error(data.detail || "Error desconocido");
   }
 
