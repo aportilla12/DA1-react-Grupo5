@@ -19,7 +19,7 @@ const STATE_LABEL = {
   error:        "Error",
 };
 
-export default function ConnectionScreen() {
+export default function ConnectionScreen({ navigation}) {
   const {
     robotType, setRobotType,
     networkInterface, setNetworkInterface,
@@ -125,6 +125,13 @@ export default function ConnectionScreen() {
         disabled={loading || connectionState === "disconnected"}
       >
         <Text style={styles.buttonText}>{loading && connectionState === "connected" ? "Desconectando..." : "Desconectar"}</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: "#0f172a" }]}
+        onPress={() => navigation.navigate("Movimiento")}
+      >
+        <Text style={styles.buttonText}>Ir a Movimiento</Text>
       </TouchableOpacity>
 
       {/* Diagnóstico */}

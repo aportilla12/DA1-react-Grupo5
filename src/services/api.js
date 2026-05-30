@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export const API_BASE_URL = "http://192.168.0.53:8000";
+export const API_BASE_URL = "http://192.168.56.1:8000";
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -55,4 +55,49 @@ export const moveRobot = (token, vx, vy, vyaw) => {
 export const stopRobot = (token) => {
   setAuthToken(token);
   return apiClient.post("/stop").then((r) => r.data);
+};
+
+export const standupRobot = (token) => {
+  setAuthToken(token);
+  return apiClient.post("/standup").then((r) => r.data);
+};
+
+export const sitdownRobot = (token) => {
+  setAuthToken(token);
+  return apiClient.post("/sitdown").then((r) => r.data);
+};
+
+export const dampRobot = (token) => {
+  setAuthToken(token);
+  return apiClient.post("/damp").then((r) => r.data);
+};
+
+export const handstandRobot = (token, enable = true) => {
+  setAuthToken(token);
+  return apiClient.post("/handstand", { enable }).then((r) => r.data);
+};
+
+export const freeboundRobot = (token, enable = true) => {
+  setAuthToken(token);
+  return apiClient.post("/freebound", { enable }).then((r) => r.data);
+};
+
+export const freeavoidRobot = (token, enable = true) => {
+  setAuthToken(token);
+  return apiClient.post("/freeavoid", { enable }).then((r) => r.data);
+};
+
+export const walkuprightRobot = (token, enable = true) => {
+  setAuthToken(token);
+  return apiClient.post("/walkupright", { enable }).then((r) => r.data);
+};
+
+export const crossstepRobot = (token, enable = true) => {
+  setAuthToken(token);
+  return apiClient.post("/crossstep", { enable }).then((r) => r.data);
+};
+
+export const freejumpRobot = (token, enable = true) => {
+  setAuthToken(token);
+  return apiClient.post("/freejump", { enable }).then((r) => r.data);
 };
