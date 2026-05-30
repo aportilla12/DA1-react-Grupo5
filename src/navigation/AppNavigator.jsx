@@ -12,13 +12,18 @@ const Stack = createNativeStackNavigator();
 export default function AppNavigator() {
   const { loading, isAuthenticated } = useAuth();
 
+  console.log("[AppNavigator] loading=", loading, "isAuthenticated=", isAuthenticated);
+
   if (loading) {
+    console.log("[AppNavigator] mostrando spinner...");
     return (
       <View style={{ flex: 1, justifyContent: "center" }}>
         <ActivityIndicator size="large" />
       </View>
     );
   }
+
+  console.log("[AppNavigator] navegando a:", isAuthenticated ? "Conexión" : "Login");
 
   return (
     <Stack.Navigator>
