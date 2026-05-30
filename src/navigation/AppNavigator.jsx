@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import { useAuth } from "../context/AuthContext";
 import LoginScreen from "../screens/LoginScreen";
+import RegisterScreen from "../screens/RegisterScreen";
 import ConnectionScreen from "../screens/ConnectionScreen";
 
 const Stack = createNativeStackNavigator();
@@ -24,7 +25,10 @@ export default function AppNavigator() {
       {isAuthenticated ? (
         <Stack.Screen name="Conexión" component={ConnectionScreen} />
       ) : (
-        <Stack.Screen name="Login" component={LoginScreen} />
+        <>
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Registro" component={RegisterScreen} />
+        </>
       )}
     </Stack.Navigator>
   );
