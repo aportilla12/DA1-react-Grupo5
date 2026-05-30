@@ -1,11 +1,20 @@
 import axios from "axios";
 
-export const API_BASE_URL = "http://192.168.1.40:8000";
+export const API_BASE_URL = "http://192.168.0.53:8000";
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
 });
+
+// Interceptor para manejar errores del backend
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const msg = error.response?.data?.detail || error.message || "Error desconocido";
+    return Promise.reject(new Error(msg));
+  }
+);
 
 export function setAuthToken(token) {
   if (token) {
@@ -21,22 +30,11 @@ export const login = (identifier, password) =>
   apiClient.post("/auth/token", { identifier, password }).then((r) => r.data);
 
 export const register = (username, email, password) =>
-  apiClient
-    .post("/auth/register", { username, email, password })
-    .then((r) => r.data);
+  apiClient.post("/auth/register", { username, email, password }).then((r) => r.data);
 
-export const connectRobot = (
-  token,
-  robotType = "go2",
-  networkInterface = "eth0",
-) => {
+export const connectRobot = (token, robotType = "go2", networkInterface = "eth0") => {
   setAuthToken(token);
-  return apiClient
-    .post("/connect", {
-      robot_type: robotType,
-      network_interface: networkInterface,
-    })
-    .then((r) => r.data);
+  return apiClient.post("/connect", { robot_type: robotType, network_interface: networkInterface }).then((r) => r.data);
 };
 
 export const disconnectRobot = (token) => {
