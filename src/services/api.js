@@ -1,45 +1,60 @@
-const BASE_URL = "http://192.168.1.40:8000";
+import axios from "axios";
 
-// Función base que todas las demás usan internamente
-const request = async (method, path, body = null, token = null) => {
-  const headers = { "Content-Type": "application/json" };
+export const API_BASE_URL = "http://192.168.1.40:8000";
 
+const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 10000,
+});
+
+export function setAuthToken(token) {
   if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
+    apiClient.defaults.headers.common.Authorization = `Bearer ${token}`;
+  } else {
+    delete apiClient.defaults.headers.common.Authorization;
   }
+}
 
-  const options = { method, headers };
-
-  if (body) {
-    options.body = JSON.stringify(body);
-  }
-
-  const response = await fetch(`${BASE_URL}${path}`, options);
-  const data = await response.json();
-
-  if (!response.ok) {
-    // El backend manda el error en data.detail
-    throw new Error(data.detail || "Error desconocido");
-  }
-
-  return data;
-};
+export default apiClient;
 
 export const login = (identifier, password) =>
-  request("POST", "/auth/token", { identifier, password });
+  apiClient.post("/auth/token", { identifier, password }).then((r) => r.data);
 
 export const register = (username, email, password) =>
-  request("POST", "/auth/register", { username, email, password });
+  apiClient
+    .post("/auth/register", { username, email, password })
+    .then((r) => r.data);
 
-export const connectRobot = (token, robotType = "go2") =>
-  request("POST", "/connect", { robot_type: robotType }, token);
+export const connectRobot = (
+  token,
+  robotType = "go2",
+  networkInterface = "eth0",
+) => {
+  setAuthToken(token);
+  return apiClient
+    .post("/connect", {
+      robot_type: robotType,
+      network_interface: networkInterface,
+    })
+    .then((r) => r.data);
+};
 
-export const disconnectRobot = (token) =>
-  request("POST", "/disconnect", null, token);
+export const disconnectRobot = (token) => {
+  setAuthToken(token);
+  return apiClient.post("/disconnect").then((r) => r.data);
+};
 
-export const getStatus = (token) => request("GET", "/status", null, token);
+export const getStatus = (token) => {
+  setAuthToken(token);
+  return apiClient.get("/status").then((r) => r.data);
+};
 
-export const moveRobot = (token, vx, vy, vyaw) =>
-  request("POST", "/move", { vx, vy, vyaw }, token);
+export const moveRobot = (token, vx, vy, vyaw) => {
+  setAuthToken(token);
+  return apiClient.post("/move", { vx, vy, vyaw }).then((r) => r.data);
+};
 
-export const stopRobot = (token) => request("POST", "/stop", null, token);
+export const stopRobot = (token) => {
+  setAuthToken(token);
+  return apiClient.post("/stop").then((r) => r.data);
+};
