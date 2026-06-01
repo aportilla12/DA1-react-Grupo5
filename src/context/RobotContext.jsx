@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef } from "react";
 import { useAuth } from "./AuthContext";
-import { connectRobot, disconnectRobot, getStatus } from "../services/api";
+import { connectRobot, disconnectRobot, getStatus, getActions, performAction } from "../services/api";
 
 const RobotContext = createContext();
 
@@ -12,6 +12,8 @@ export function RobotProvider({ children }) {
   const [statusData, setStatusData] = useState(null);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const intervalRef = useRef(null);
+  const [availableActions, setAvailableActions] = useState([]);
+  const [commandHistory, setCommandHistory] = useState([]);
 
   const fetchStatus = async () => {
     if (!token) return;
@@ -51,15 +53,43 @@ export function RobotProvider({ children }) {
     }
   };
 
+  const loadActions = async () => {
+    if (!token) return;
+    try {
+      const actions = await getActions(token);
+      setAvailableActions(actions);
+    } catch (e) {
+      console.log("Error cargando acciones:", e.message);
+    }
+  };
+
+  const executeAction = async (actionName) => {
+    if (!token) return;
+    const newCommand = { action: actionName, timestamp: new Date().toISOString(), status: "pending" };
+    try {
+      await performAction(token, actionName);
+      setCommandHistory((prev) => [{ ...newCommand, status: "success" }, ...prev]);
+    } catch (e) {
+      setCommandHistory((prev) => [{ ...newCommand, status: "error" }, ...prev]);
+      throw e;
+    }
+  };
+
   // Cada 5 segundos se chequea la conexión
   useEffect(() => {
     if (!token) return;
 
+    // Consultar el estado inmediatamente al iniciar la app / iniciar sesión
+    fetchStatus();
+
     intervalRef.current = setInterval(async () => {
       const data = await fetchStatus();
 
+      // Evaluamos desconexión si data es null (error de red/API) o el estado explícito no es connected
+      const isDisconnected = !data || data.connection_state !== "connected";
+
       // Reconexión automática si se perdió la conexión
-      if (data && data.connection_state !== "connected" && connectionState === "connected" && !isReconnecting) {
+      if (isDisconnected && connectionState === "connected" && !isReconnecting) {
         setIsReconnecting(true);
         try {
           await connectRobot(token, robotType, networkInterface);
@@ -85,6 +115,10 @@ export function RobotProvider({ children }) {
       connect,
       disconnect,
       fetchStatus,
+      availableActions,
+      commandHistory,
+      loadActions,
+      executeAction,
     }}>
       {children}
     </RobotContext.Provider>

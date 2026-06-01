@@ -134,6 +134,13 @@ export default function ConnectionScreen({ navigation}) {
         <Text style={styles.buttonText}>Ir a Movimiento</Text>
       </TouchableOpacity>
 
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: "#0f172a" }]}
+        onPress={() => navigation.navigate("Acciones")}
+      >
+        <Text style={styles.buttonText}>Ir a Acciones</Text>
+      </TouchableOpacity>
+
       {/* Diagnóstico */}
       {statusData && (
         <>

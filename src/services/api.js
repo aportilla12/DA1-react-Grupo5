@@ -101,3 +101,13 @@ export const freejumpRobot = (token, enable = true) => {
   setAuthToken(token);
   return apiClient.post("/freejump", { enable }).then((r) => r.data);
 };
+
+export const getActions = (token) => {
+  setAuthToken(token);
+  return apiClient.get("/actions").then((r) => r.data);
+};
+
+export const performAction = (token, actionName) => {
+  setAuthToken(token);
+  return apiClient.post(`/action/${actionName}`).then((r) => r.data);
+};
