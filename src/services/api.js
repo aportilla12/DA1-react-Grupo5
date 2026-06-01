@@ -88,11 +88,10 @@ export const freeavoidRobot = (token, enable = true) => {
   return apiClient.post("/freeavoid", { enable }).then((r) => r.data);
 };
 
-export const saveCommandHistory = async (token, robotType, action, status, details) => {
+export const saveCommandHistory = async (token, robotType, action, status, details, username = "default") => {
   try {
-    const key = `history_${token}`;
-    const globalKey = "global_history";
-    
+    // Usar username como clave para que persista entre sesiones
+    const key = `history_${username}`;
     const existing = await AsyncStorage.getItem(key);
     const history = existing ? JSON.parse(existing) : [];
     
@@ -108,14 +107,6 @@ export const saveCommandHistory = async (token, robotType, action, status, detai
     history.unshift(newCommand);
     await AsyncStorage.setItem(key, JSON.stringify(history));
     
-    // También guardar en historial global para que persista incluso si cambia el token
-    const globalExisting = await AsyncStorage.getItem(globalKey);
-    const globalHistory = globalExisting ? JSON.parse(globalExisting) : [];
-    globalHistory.unshift(newCommand);
-    // Mantener solo los últimos 100 comandos globales
-    if (globalHistory.length > 100) globalHistory.pop();
-    await AsyncStorage.setItem(globalKey, JSON.stringify(globalHistory));
-    
     return newCommand;
   } catch (e) {
     console.log("[saveCommandHistory] error:", e.message);
@@ -123,9 +114,10 @@ export const saveCommandHistory = async (token, robotType, action, status, detai
   }
 };
 
-export const getCommandHistory = async (token) => {
+export const getCommandHistory = async (token, username = "default") => {
   try {
-    const key = `history_${token}`;
+    // Usar username como clave para recuperar el historial del usuario
+    const key = `history_${username}`;
     const data = await AsyncStorage.getItem(key);
     return data ? JSON.parse(data) : [];
   } catch (e) {
@@ -134,9 +126,10 @@ export const getCommandHistory = async (token) => {
   }
 };
 
-export const getCommandHistoryByRobot = async (token, robotType) => {
+export const getCommandHistoryByRobot = async (token, robotType, username = "default") => {
   try {
-    const key = `history_${token}`;
+    // Usar username como clave
+    const key = `history_${username}`;
     const data = await AsyncStorage.getItem(key);
     const history = data ? JSON.parse(data) : [];
     return history.filter(cmd => cmd.robotType === robotType);

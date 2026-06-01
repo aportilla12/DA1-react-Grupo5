@@ -32,7 +32,7 @@ export default function ConnectionScreen({ navigation}) {
     connect,
     disconnect,
   } = useRobot();
-  const { logout, token } = useAuth();
+  const { logout, token, username } = useAuth();
   const isFocused = useIsFocused();
 
   const [loading, setLoading] = useState(false);
@@ -40,15 +40,15 @@ export default function ConnectionScreen({ navigation}) {
   const [combinedHistory, setCombinedHistory] = useState([]);
 
   useEffect(() => {
-    if (isFocused && token) {
+    if (isFocused && token && username) {
       loadCombinedHistory();
     }
-  }, [isFocused, token]);
+  }, [isFocused, token, username]);
 
   const loadCombinedHistory = async () => {
     try {
-      if (!token) return;
-      const history = await getCommandHistory(token);
+      if (!token || !username) return;
+      const history = await getCommandHistory(token, username);
       setCombinedHistory(history.slice(0, 5));
     } catch (e) {
       console.log("[ConnectionScreen] Error loading history:", e.message);

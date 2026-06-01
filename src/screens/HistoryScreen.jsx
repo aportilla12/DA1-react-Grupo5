@@ -13,7 +13,7 @@ import { useRobot } from "../context/RobotContext";
 import { getCommandHistoryByRobot } from "../services/api";
 
 export default function HistoryScreen() {
-  const { token } = useAuth();
+  const { token, username } = useAuth();
   const { robotType } = useRobot();
   const isFocused = useIsFocused();
   const [history, setHistory] = useState([]);
@@ -24,18 +24,18 @@ export default function HistoryScreen() {
   const getRobotLabel = (type) => (type === "g1" ? "G1 Humanoide" : "Go2 Cuadrupedo");
 
   const loadHistory = useCallback(async () => {
-    if (!token) return;
+    if (!token || !username) return;
     setError("");
     setLoading(true);
     try {
-      const items = await getCommandHistoryByRobot(token, robotType);
+      const items = await getCommandHistoryByRobot(token, robotType, username);
       setHistory(Array.isArray(items) ? items : []);
     } catch (e) {
       setError(e.message || "Error al cargar historial");
     } finally {
       setLoading(false);
     }
-  }, [token, robotType]);
+  }, [token, robotType, username]);
 
   useEffect(() => {
     if (isFocused) {

@@ -27,7 +27,7 @@ import {
 } from "../services/api";
 
 export default function MovementScreen({ navigation }) {
-  const { token } = useAuth();
+  const { token, username } = useAuth();
   const { connectionState, robotType } = useRobot();
 
   const [loading, setLoading] = useState(false);
@@ -40,9 +40,9 @@ export default function MovementScreen({ navigation }) {
     robotType === "g1" ? "🤖 G1 Humanoide" : "🐕 Go2 Cuadrupedo";
 
   const recordCommand = async (action, success, details = null) => {
-    if (!token) return;
+    if (!token || !username) return;
     try {
-      await saveCommandHistory(token, robotType, action, success ? "success" : "failed", details);
+      await saveCommandHistory(token, robotType, action, success ? "success" : "failed", details, username);
     } catch (e) {
       console.log("[MovementScreen] recordCommand error:", e.message);
     }
