@@ -23,10 +23,11 @@ import {
   walkuprightRobot,
   crossstepRobot,
   freejumpRobot,
+  saveCommandHistory,
 } from "../services/api";
 
-export default function MovementScreen() {
-  const { token } = useAuth();
+export default function MovementScreen({ navigation }) {
+  const { token, username } = useAuth();
   const { connectionState, robotType } = useRobot();
 
   const [loading, setLoading] = useState(false);
@@ -36,7 +37,16 @@ export default function MovementScreen() {
   const isConnected = connectionState === "connected";
 
   const currentRobotLabel =
-    robotType === "g1" ? "🤖 G1 Humanoide" : "🐕 Go2 Cuadrúpedo";
+    robotType === "g1" ? "🤖 G1 Humanoide" : "🐕 Go2 Cuadrupedo";
+
+  const recordCommand = async (action, success, details = null) => {
+    if (!token || !username) return;
+    try {
+      await saveCommandHistory(token, robotType, action, success ? "success" : "failed", details, username);
+    } catch (e) {
+      console.log("[MovementScreen] recordCommand error:", e.message);
+    }
+  };
 
   const sendMove = async (label, vx, vy, vyaw) => {
     if (!isConnected || !token) return;
@@ -48,8 +58,11 @@ export default function MovementScreen() {
     try {
       await moveRobot(token, vx, vy, vyaw);
       setFeedback(`${label} enviado correctamente`);
+      await recordCommand(label, true, `vx=${vx} vy=${vy} vyaw=${vyaw}`);
     } catch (e) {
-      setFeedback(e.message || "Error al enviar movimiento");
+      const errorMessage = e.message || "Error al enviar movimiento";
+      setFeedback(errorMessage);
+      await recordCommand(label, false, errorMessage);
     } finally {
       setLoading(false);
     }
@@ -65,8 +78,11 @@ export default function MovementScreen() {
     try {
       await commandFn(token);
       setFeedback(`${label} enviado correctamente`);
+      await recordCommand(label, true);
     } catch (e) {
-      setFeedback(e.message || `Error al ejecutar ${label}`);
+      const errorMessage = e.message || `Error al ejecutar ${label}`;
+      setFeedback(errorMessage);
+      await recordCommand(label, false, errorMessage);
     } finally {
       setLoading(false);
     }
@@ -82,8 +98,11 @@ export default function MovementScreen() {
     try {
       await commandFn(token, enable);
       setFeedback(`${label} enviado correctamente`);
+      await recordCommand(label, true, `enable=${enable}`);
     } catch (e) {
-      setFeedback(e.message || `Error al ejecutar ${label}`);
+      const errorMessage = e.message || `Error al ejecutar ${label}`;
+      setFeedback(errorMessage);
+      await recordCommand(label, false, errorMessage);
     } finally {
       setLoading(false);
     }
@@ -95,8 +114,10 @@ export default function MovementScreen() {
     try {
       await moveRobot(token, vx, vy, vyaw);
       setLastCommand(`Joystick vx=${vx} vy=${vy} vyaw=${vyaw}`);
+      await recordCommand("Joystick", true, `vx=${vx} vy=${vy} vyaw=${vyaw}`);
     } catch (e) {
       setFeedback(e.message || "Error al mover con joystick");
+      await recordCommand("Joystick", false, e.message || "Error al mover con joystick");
     }
   };
 
@@ -107,8 +128,10 @@ export default function MovementScreen() {
       await stopRobot(token);
       setLastCommand("Stop por joystick");
       setFeedback("Robot detenido");
+      await recordCommand("Detener (Joystick)", true);
     } catch (e) {
       setFeedback(e.message || "Error al detener con joystick");
+      await recordCommand("Detener (Joystick)", false, e.message || "Error al detener con joystick");
     }
   };
 
@@ -119,7 +142,7 @@ export default function MovementScreen() {
 
         <View style={styles.disconnectedBox}>
           <Text style={styles.disconnectedText}>
-            Primero tenés que conectar el robot.
+            Primero tenes que conectar el robot.
           </Text>
         </View>
       </View>
@@ -179,10 +202,10 @@ export default function MovementScreen() {
         <TouchableOpacity
           style={styles.directionButton}
           disabled={loading}
-          onPress={() => sendMove("Atrás", -0.3, 0, 0)}
+          onPress={() => sendMove("Atras", -0.3, 0, 0)}
         >
           <Text style={styles.arrow}>↓</Text>
-          <Text style={styles.buttonText}>Atrás</Text>
+          <Text style={styles.buttonText}>Atras</Text>
         </TouchableOpacity>
       </View>
 
@@ -249,7 +272,7 @@ export default function MovementScreen() {
             disabled={loading}
             onPress={() => sendToggleCommand("Freeavoid", freeavoidRobot, true)}
           >
-            <Text style={styles.extraText}>Esquivar Obstáculos</Text>
+            <Text style={styles.extraText}>Esquivar Obstaculos</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -286,12 +309,19 @@ export default function MovementScreen() {
 
       {lastCommand ? (
         <View style={styles.lastCommandBox}>
-          <Text style={styles.lastCommandLabel}>Último comando</Text>
+          <Text style={styles.lastCommandLabel}>Ultimo comando</Text>
           <Text style={styles.lastCommandText}>{lastCommand}</Text>
         </View>
       ) : null}
 
       {feedback ? <Text style={styles.feedback}>{feedback}</Text> : null}
+
+      <TouchableOpacity
+        style={styles.historyButton}
+        onPress={() => navigation.navigate("Historial")}
+      >
+        <Text style={styles.historyButtonText}>Ver historial</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -435,5 +465,17 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: "#0f172a",
     fontWeight: "bold",
+  },
+  historyButton: {
+    marginTop: 24,
+    backgroundColor: "#0f172a",
+    borderRadius: 12,
+    padding: 16,
+    alignItems: "center",
+  },
+  historyButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
   },
 });

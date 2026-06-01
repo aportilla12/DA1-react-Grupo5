@@ -1,9 +1,12 @@
-import { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import { useState, useEffect } from "react";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, FlatList } from "react-native";
+import { useAuth } from "../context/AuthContext";
 import { useRobot } from "../context/RobotContext";
+import { getCommandHistory } from "../services/api";
+import { useIsFocused } from "@react-navigation/native";
 
 const ROBOTS = {
-  go2: { label: "Go2", emoji: "🐕", description: "Cuadrúpedo" },
+  go2: { label: "Go2", emoji: "🐕", description: "Cuadrupedo" },
   g1:  { label: "G1",  emoji: "🤖", description: "Humanoide"  },
 };
 
@@ -29,9 +32,51 @@ export default function ConnectionScreen({ navigation}) {
     connect,
     disconnect,
   } = useRobot();
+  const { logout, token, username } = useAuth();
+  const isFocused = useIsFocused();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [combinedHistory, setCombinedHistory] = useState([]);
+
+  useEffect(() => {
+    if (isFocused && token && username) {
+      loadCombinedHistory();
+    }
+  }, [isFocused, token, username]);
+
+  const loadCombinedHistory = async () => {
+    try {
+      if (!token || !username) return;
+      const history = await getCommandHistory(token, username);
+      setCombinedHistory(history.slice(0, 5));
+    } catch (e) {
+      console.log("[ConnectionScreen] Error loading history:", e.message);
+    }
+  };
+
+  const getRobotEmoji = (type) => ROBOTS[type]?.emoji || "❓";
+
+  const historyRenderItem = () => {
+    return combinedHistory.map((cmd, idx) => {
+      const robotType = cmd.robotType || "unknown";
+      return (
+        <View key={idx} style={styles.historyItem}>
+          <View style={styles.historyHeader}>
+            <Text style={styles.historyRobot}>
+              {getRobotEmoji(robotType)} {cmd.action}
+            </Text>
+            <Text style={[styles.historyStatus, cmd.status === "success" ? styles.historySuccess : styles.historyFailed]}>
+              {cmd.status === "success" ? "OK" : "Error"}
+            </Text>
+          </View>
+          <Text style={styles.historyTime}>
+            {cmd.timestamp ? new Date(cmd.timestamp).toLocaleTimeString() : ""}
+          </Text>
+        </View>
+      );
+    });
+  };
 
   console.log("[ConnectionScreen] render: connectionState=", connectionState, "robotType=", robotType, "networkInterface=", networkInterface, "isReconnecting=", isReconnecting);
 
@@ -134,10 +179,27 @@ export default function ConnectionScreen({ navigation}) {
         <Text style={styles.buttonText}>Ir a Movimiento</Text>
       </TouchableOpacity>
 
-      {/* Diagnóstico */}
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: "#ef4444" }]}
+        onPress={logout}
+      >
+        <Text style={styles.buttonText}>Cerrar sesion</Text>
+      </TouchableOpacity>
+
+      {/* Historial combinado */}
+      {combinedHistory.length > 0 && (
+        <>
+          <Text style={styles.label}>Ultimos comandos (todos los robots)</Text>
+          <View style={styles.historyList}>
+            {historyRenderItem()}
+          </View>
+        </>
+      )}
+
+      {/* Diagnostico */}
       {statusData && (
         <>
-          <Text style={styles.label}>Diagnóstico</Text>
+          <Text style={styles.label}>Diagnostico</Text>
           <View style={styles.diagnostics}>
             <Text style={styles.diagnosticsText}>
               {JSON.stringify(statusData, null, 2)}
@@ -170,4 +232,12 @@ const styles = StyleSheet.create({
   buttonText:       { color: "#fff", fontWeight: "bold", fontSize: 16 },
   diagnostics:      { backgroundColor: "#1e293b", borderRadius: 10, padding: 16, marginTop: 8 },
   diagnosticsText:  { color: "#94a3b8", fontFamily: "monospace", fontSize: 12 },
+  historyList:      { backgroundColor: "#fff", borderRadius: 12, borderWidth: 1, borderColor: "#e2e8f0", overflow: "hidden" },
+  historyItem:      { borderBottomWidth: 1, borderBottomColor: "#e2e8f0", padding: 12 },
+  historyHeader:    { flexDirection: "row", justifyContent: "space-between", marginBottom: 4 },
+  historyRobot:     { fontSize: 14, fontWeight: "600", color: "#0f172a" },
+  historyStatus:    { fontSize: 12, fontWeight: "bold", textTransform: "uppercase" },
+  historySuccess:   { color: "#16a34a" },
+  historyFailed:    { color: "#dc2626" },
+  historyTime:      { fontSize: 11, color: "#94a3b8" },
 });
