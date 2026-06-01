@@ -23,16 +23,6 @@ export function AuthProvider({ children }) {
       if (savedToken) {
         setToken(savedToken);
         setAuthToken(savedToken);
-      } else {
-        // TOKEN TEMPORAL PARA DESARROLLO - SACAR CUANDO ESTÉ EL LOGIN
-        const devToken = await apiClient.post("/auth/token", {
-          identifier: "admin",
-          password: "changeme",
-        }).then(r => r.data.access_token);
-        console.log("[AuthContext] loadSession: token dev obtenido:", devToken.slice(0, 20) + "...");
-        await AsyncStorage.setItem("token", devToken);
-        setToken(devToken);
-        setAuthToken(devToken);
       }
     } catch (e) {
       console.log("[AuthContext] loadSession: error:", e.message);

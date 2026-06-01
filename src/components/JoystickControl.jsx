@@ -144,7 +144,7 @@ export default function JoystickControl({
       </View>
 
       <Text style={styles.help}>
-        Arrastrá el joystick para mover el robot. Al soltar, se detiene.
+        Arrastra el joystick para mover el robot. Al soltar, se detiene.
       </Text>
 
       <View style={styles.valuesBox}>

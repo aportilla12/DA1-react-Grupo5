@@ -1,6 +1,7 @@
 import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export const API_BASE_URL = "http://192.168.56.1:8000";
+export const API_BASE_URL = "http://172.20.10.2:8000";
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -85,6 +86,64 @@ export const freeboundRobot = (token, enable = true) => {
 export const freeavoidRobot = (token, enable = true) => {
   setAuthToken(token);
   return apiClient.post("/freeavoid", { enable }).then((r) => r.data);
+};
+
+export const saveCommandHistory = async (token, robotType, action, status, details) => {
+  try {
+    const key = `history_${token}`;
+    const globalKey = "global_history";
+    
+    const existing = await AsyncStorage.getItem(key);
+    const history = existing ? JSON.parse(existing) : [];
+    
+    const newCommand = {
+      id: Date.now(),
+      robotType,
+      action,
+      status,
+      details,
+      timestamp: new Date().toISOString(),
+    };
+    
+    history.unshift(newCommand);
+    await AsyncStorage.setItem(key, JSON.stringify(history));
+    
+    // También guardar en historial global para que persista incluso si cambia el token
+    const globalExisting = await AsyncStorage.getItem(globalKey);
+    const globalHistory = globalExisting ? JSON.parse(globalExisting) : [];
+    globalHistory.unshift(newCommand);
+    // Mantener solo los últimos 100 comandos globales
+    if (globalHistory.length > 100) globalHistory.pop();
+    await AsyncStorage.setItem(globalKey, JSON.stringify(globalHistory));
+    
+    return newCommand;
+  } catch (e) {
+    console.log("[saveCommandHistory] error:", e.message);
+    throw e;
+  }
+};
+
+export const getCommandHistory = async (token) => {
+  try {
+    const key = `history_${token}`;
+    const data = await AsyncStorage.getItem(key);
+    return data ? JSON.parse(data) : [];
+  } catch (e) {
+    console.log("[getCommandHistory] error:", e.message);
+    return [];
+  }
+};
+
+export const getCommandHistoryByRobot = async (token, robotType) => {
+  try {
+    const key = `history_${token}`;
+    const data = await AsyncStorage.getItem(key);
+    const history = data ? JSON.parse(data) : [];
+    return history.filter(cmd => cmd.robotType === robotType);
+  } catch (e) {
+    console.log("[getCommandHistoryByRobot] error:", e.message);
+    return [];
+  }
 };
 
 export const walkuprightRobot = (token, enable = true) => {

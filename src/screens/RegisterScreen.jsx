@@ -9,23 +9,22 @@ export default function RegisterScreen({ navigation }) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
 
-  console.log("[RegisterScreen] render: loading=", loading, "error=", error, "success=", success);
+  console.log("[RegisterScreen] render: loading=", loading, "error=", error);
 
   const handleRegister = async () => {
     console.log("[RegisterScreen] handleRegister: username=", username, "email=", email);
     setError("");
     if (!username || !email || !password || !confirmPassword) {
       console.log("[RegisterScreen] handleRegister: campos incompletos");
-      setError("Completá todos los campos");
-      Alert.alert("Error", "Completá todos los campos");
+      setError("Completa todos los campos");
+      Alert.alert("Error", "Completa todos los campos");
       return;
     }
     if (password !== confirmPassword) {
-      console.log("[RegisterScreen] handleRegister: contraseñas no coinciden");
-      setError("Las contraseñas no coinciden");
-      Alert.alert("Error", "Las contraseñas no coinciden");
+      console.log("[RegisterScreen] handleRegister: contrasenas no coinciden");
+      setError("Las contrasenas no coinciden");
+      Alert.alert("Error", "Las contrasenas no coinciden");
       return;
     }
 
@@ -33,8 +32,7 @@ export default function RegisterScreen({ navigation }) {
     try {
       await register(username, email, password);
       console.log("[RegisterScreen] handleRegister: registro exitoso");
-      setSuccess(true);
-      Alert.alert("Éxito", "Usuario creado. Podés iniciar sesión.", [
+      Alert.alert("Exito", "Usuario creado. Podes iniciar sesion.", [
         { text: "OK", onPress: () => navigation.navigate("Login") },
       ]);
     } catch (e) {
@@ -46,15 +44,6 @@ export default function RegisterScreen({ navigation }) {
       setLoading(false);
     }
   };
-
-  if (success) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.title}>✅ Usuario creado</Text>
-        <Button title="Ir al Login" onPress={() => navigation.navigate("Login")} />
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>
@@ -77,14 +66,14 @@ export default function RegisterScreen({ navigation }) {
       />
       <TextInput
         style={styles.input}
-        placeholder="Contraseña"
+        placeholder="Contrasena"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
       <TextInput
         style={styles.input}
-        placeholder="Confirmar contraseña"
+        placeholder="Confirmar contrasena"
         value={confirmPassword}
         onChangeText={setConfirmPassword}
         secureTextEntry

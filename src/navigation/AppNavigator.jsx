@@ -1,5 +1,5 @@
 import React from "react";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, Button, View } from "react-native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import { useAuth } from "../context/AuthContext";
@@ -7,11 +7,12 @@ import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
 import ConnectionScreen from "../screens/ConnectionScreen";
 import MovementScreen from "../screens/MovementScreen";
+import HistoryScreen from "../screens/HistoryScreen";
 
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
-  const { loading, isAuthenticated } = useAuth();
+  const { loading, isAuthenticated, logout } = useAuth();
 
   console.log(
     "[AppNavigator] loading=",
@@ -31,15 +32,26 @@ export default function AppNavigator() {
 
   console.log(
     "[AppNavigator] navegando a:",
-    isAuthenticated ? "Conexión" : "Login"
+    isAuthenticated ? "Conexion" : "Login"
   );
 
   return (
-    <Stack.Navigator>
+    <Stack.Navigator
+      screenOptions={
+        isAuthenticated
+          ? {
+              headerRight: () => (
+                <Button title="Cerrar sesion" onPress={logout} color="#ef4444" />
+              ),
+            }
+          : {}
+      }
+    >
       {isAuthenticated ? (
         <>
-          <Stack.Screen name="Conexión" component={ConnectionScreen} />
+          <Stack.Screen name="Conexion" component={ConnectionScreen} />
           <Stack.Screen name="Movimiento" component={MovementScreen} />
+          <Stack.Screen name="Historial" component={HistoryScreen} />
         </>
       ) : (
         <>
