@@ -88,6 +88,16 @@ export const freeavoidRobot = (token, enable = true) => {
   return apiClient.post("/freeavoid", { enable }).then((r) => r.data);
 };
 
+export const getActions = (token) => {
+  setAuthToken(token);
+  return apiClient.get("/actions").then((r) => r.data);
+};
+
+export const executeAction = (token, actionName) => {
+  setAuthToken(token);
+  return apiClient.post(`/action/${actionName}`).then((r) => r.data);
+};
+
 export const saveCommandHistory = async (token, robotType, action, status, details, username = "default") => {
   try {
     // Usar username como clave para que persista entre sesiones
