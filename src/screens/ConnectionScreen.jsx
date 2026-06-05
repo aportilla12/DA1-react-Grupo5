@@ -172,12 +172,21 @@ export default function ConnectionScreen({ navigation}) {
         <Text style={styles.buttonText}>{loading && connectionState === "connected" ? "Desconectando..." : "Desconectar"}</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: "#0f172a" }]}
-        onPress={() => navigation.navigate("Movimiento")}
-      >
-        <Text style={styles.buttonText}>Ir a Movimiento</Text>
-      </TouchableOpacity>
+      <View style={{ flexDirection: "row", gap: 12 }}>
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: "#0f172a", flex: 1 }]}
+          onPress={() => navigation.navigate("Movimiento")}
+        >
+          <Text style={styles.buttonText}>Movimiento</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: "#0f172a", flex: 1 }]}
+          onPress={() => navigation.navigate("Acciones")}
+        >
+          <Text style={styles.buttonText}>Acciones</Text>
+        </TouchableOpacity>
+      </View>
 
       <TouchableOpacity
         style={[styles.button, { backgroundColor: "#ef4444" }]}

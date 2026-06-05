@@ -51,15 +51,25 @@ export function RobotProvider({ children }) {
     }
   };
 
-  // Cada 5 segundos se chequea la conexión
+  const connectionStateRef = useRef(connectionState);
+
+  useEffect(() => {
+    connectionStateRef.current = connectionState;
+  }, [connectionState]);
+
+  // Consulta inicial y cada 5 segundos
   useEffect(() => {
     if (!token) return;
 
+    // 1. Ejecutar inmediatamente al iniciar la app/autenticarse
+    fetchStatus();
+
+    // 2. Mantener el chequeo cada 5 segundos
     intervalRef.current = setInterval(async () => {
       const data = await fetchStatus();
 
-      // Reconexión automática si se perdió la conexión
-      if (data && data.connection_state !== "connected" && connectionState === "connected" && !isReconnecting) {
+      // Reconexión automática si se perdió la conexión y antes estaba conectado
+      if (data && data.connection_state !== "connected" && connectionStateRef.current === "connected" && !isReconnecting) {
         setIsReconnecting(true);
         try {
           await connectRobot(token, robotType, networkInterface);
@@ -73,7 +83,7 @@ export function RobotProvider({ children }) {
     }, 5000);
 
     return () => clearInterval(intervalRef.current);
-  }, [token, connectionState, robotType, networkInterface]);
+  }, [token, robotType, networkInterface]);
 
   return (
     <RobotContext.Provider value={{
