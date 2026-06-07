@@ -111,6 +111,26 @@ export default function RegisterScreen({ navigation }) {
 
             <View style={styles.fieldGroup}>
               <Text style={styles.label}>👤 USUARIO</Text>
+
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Ej. operator_01"
+                  placeholderTextColor="#666a73"
+                  value={username}
+                  onChangeText={setUsername}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  autoComplete="username"
+                  textContentType="username"
+                  importantForAutofill="yes"
+                />
+              </View>
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.label}>@ EMAIL</Text>
+
               <View style={styles.inputWrapper}>
                 <TextInput
                   style={styles.input}

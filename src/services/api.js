@@ -1,7 +1,7 @@
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export const API_BASE_URL = "http://192.168.56.1:8000";
+export const API_BASE_URL = "http://192.168.0.193:8000";
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -16,7 +16,6 @@ apiClient.interceptors.response.use(
     return Promise.reject(new Error(msg));
   }
 );
-
 export function setAuthToken(token) {
   if (token) {
     apiClient.defaults.headers.common.Authorization = `Bearer ${token}`;
@@ -95,7 +94,9 @@ export const getActions = (token) => {
 
 export const executeAction = (token, actionName) => {
   setAuthToken(token);
-  return apiClient.post(`/action/${actionName}`).then((r) => r.data);
+  return apiClient
+    .post(`/action/${encodeURIComponent(actionName)}`)
+    .then((r) => r.data);
 };
 
 export const saveCommandHistory = async (token, robotType, action, status, details, username = "default") => {

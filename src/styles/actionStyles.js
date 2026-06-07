@@ -2,10 +2,6 @@ import { StyleSheet } from "react-native";
 import { COLORS, RADIUS, SPACING, FONT } from "./theme";
 
 export const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
 
   header: {
     height: 58,
@@ -63,7 +59,7 @@ export const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 110,
   },
 
   title: {

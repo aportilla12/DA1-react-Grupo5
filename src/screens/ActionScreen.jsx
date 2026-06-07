@@ -12,6 +12,7 @@ import BottomNavBar from "../components/BottomNavBar";
 import { useIsFocused } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
 import { useRobot } from "../context/RobotContext";
+
 import {
   getActions,
   executeAction,
@@ -30,11 +31,13 @@ const ACTION_LABELS = {
   flips: "Volteretas",
   balance_stand: "Balance",
   recovery_stand: "Recuperarse",
+
   wave_hand: "Saludar mano",
   wave_hand_turn: "Saludo giro",
   shake_hand: "Dar mano",
   high_stand: "Postura alta",
   low_stand: "Postura baja",
+
   release_arm: "Soltar brazo",
   shake_hand_arm: "Dar mano brazo",
   high_five: "Chocar cinco",
@@ -51,17 +54,32 @@ const ACTION_ICONS = {
   flips: "🤸",
   balance_stand: "⚖️",
   recovery_stand: "↺",
+
   wave_hand: "👋",
   wave_hand_turn: "🔄",
   shake_hand: "🤝",
   high_stand: "⬆️",
   low_stand: "⬇️",
+
   release_arm: "🦾",
   shake_hand_arm: "🤝",
   high_five: "✋",
   hug: "🫂",
   clap: "👏",
 };
+
+function getActionName(actionItem) {
+  if (!actionItem) return "";
+  if (typeof actionItem === "string") return actionItem;
+  return actionItem.name || actionItem.action || actionItem.action_name || "";
+}
+
+function normalizeActions(data) {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.actions)) return data.actions;
+  if (Array.isArray(data?.available_actions)) return data.available_actions;
+  return [];
+}
 
 function formatActionName(actionName) {
   if (!actionName) return "Acción";
@@ -73,8 +91,27 @@ function formatActionName(actionName) {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-function getActionIcon(actionName) {
-  return ACTION_ICONS[actionName] || "▣";
+function getActionIcon(actionNameOrLabel) {
+  const raw = String(actionNameOrLabel || "");
+  const normalized = raw
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replaceAll(" ", "_");
+
+  if (ACTION_ICONS[raw]) return ACTION_ICONS[raw];
+  if (ACTION_ICONS[normalized]) return ACTION_ICONS[normalized];
+
+  if (normalized.includes("saludar")) return "👋";
+  if (normalized.includes("baile") || normalized.includes("dance")) return "🕺";
+  if (normalized.includes("corazon") || normalized.includes("heart")) return "💙";
+  if (normalized.includes("voltereta") || normalized.includes("flip")) return "🤸";
+  if (normalized.includes("balance")) return "⚖️";
+  if (normalized.includes("mano") || normalized.includes("hand")) return "🤝";
+  if (normalized.includes("abrazo") || normalized.includes("hug")) return "🫂";
+  if (normalized.includes("aplaudir") || normalized.includes("clap")) return "👏";
+
+  return "▣";
 }
 
 export default function ActionScreen({ navigation }) {
@@ -84,7 +121,7 @@ export default function ActionScreen({ navigation }) {
 
   const [actions, setActions] = useState([]);
   const [loadingActions, setLoadingActions] = useState(false);
-  const [loadingExecute, setLoadingExecute] = useState(false);
+  const [executingAction, setExecutingAction] = useState(null);
   const [feedback, setFeedback] = useState("");
   const [localHistory, setLocalHistory] = useState([]);
 
@@ -93,8 +130,10 @@ export default function ActionScreen({ navigation }) {
   useEffect(() => {
     if (isConnected && token) {
       fetchActions();
+    } else {
+      setActions([]);
     }
-  }, [isConnected, token]);
+  }, [isConnected, token, robotType]);
 
   useEffect(() => {
     if (isFocused && token && username) {
@@ -114,9 +153,14 @@ export default function ActionScreen({ navigation }) {
   const fetchActions = async () => {
     try {
       setLoadingActions(true);
+      setFeedback("");
+
       const data = await getActions(token);
-      setActions(data.actions || data || []);
+      const normalized = normalizeActions(data);
+
+      setActions(normalized);
     } catch (e) {
+      setActions([]);
       setFeedback(e.message || "No se pudieron cargar las acciones.");
     } finally {
       setLoadingActions(false);
@@ -145,21 +189,28 @@ export default function ActionScreen({ navigation }) {
   const handleExecuteAction = async (actionItem) => {
     if (!isConnected || !token) return;
 
-    const actionName = actionItem.name || actionItem;
+    const actionName = getActionName(actionItem);
+    const actionLabel = formatActionName(actionName);
 
-    setLoadingExecute(true);
+    if (!actionName) {
+      setFeedback("Acción inválida.");
+      return;
+    }
+
+    setExecutingAction(actionName);
     setFeedback("");
 
     try {
       await executeAction(token, actionName);
-      setFeedback(`Acción "${formatActionName(actionName)}" ejecutada correctamente.`);
-      await recordCommand(formatActionName(actionName), true);
+
+      setFeedback(`Acción "${actionLabel}" ejecutada correctamente.`);
+      await recordCommand(actionLabel, true);
     } catch (e) {
-      const errorMessage = e.message || `Error al ejecutar "${actionName}"`;
+      const errorMessage = e.message || `Error al ejecutar "${actionLabel}"`;
       setFeedback(errorMessage);
-      await recordCommand(formatActionName(actionName), false, errorMessage);
+      await recordCommand(actionLabel, false, errorMessage);
     } finally {
-      setLoadingExecute(false);
+      setExecutingAction(null);
     }
   };
 
@@ -167,6 +218,7 @@ export default function ActionScreen({ navigation }) {
     return (
       <View style={styles.screen}>
         <TopAppBar />
+
         <View style={styles.disconnectedContent}>
           <Text style={styles.title}>Acciones del Robot</Text>
 
@@ -185,8 +237,10 @@ export default function ActionScreen({ navigation }) {
   return (
     <View style={styles.screen}>
       <TopAppBar />
+
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.title}>Acciones del Robot</Text>
+
         <Text style={styles.subtitle}>
           Ejecutá protocolos disponibles para el robot conectado.
         </Text>
@@ -202,22 +256,29 @@ export default function ActionScreen({ navigation }) {
         ) : actions.length > 0 ? (
           <View style={styles.grid}>
             {actions.map((action, idx) => {
-              const actionName = action.name || action;
+              const actionName = getActionName(action);
               const label = formatActionName(actionName);
               const icon = getActionIcon(actionName);
+              const isExecuting = executingAction === actionName;
 
               return (
                 <TouchableOpacity
                   key={`${actionName}-${idx}`}
                   style={[
                     styles.actionButton,
-                    loadingExecute && styles.actionButtonDisabled,
+                    executingAction && styles.actionButtonDisabled,
                   ]}
-                  disabled={loadingExecute}
+                  disabled={!!executingAction}
                   onPress={() => handleExecuteAction(action)}
                 >
-                  <Text style={styles.actionIcon}>{icon}</Text>
-                  <Text style={styles.actionText}>{label}</Text>
+                  {isExecuting ? (
+                    <ActivityIndicator size="small" color="#64FFDA" />
+                  ) : (
+                    <>
+                      <Text style={styles.actionIcon}>{icon}</Text>
+                      <Text style={styles.actionText}>{label}</Text>
+                    </>
+                  )}
                 </TouchableOpacity>
               );
             })}
@@ -228,6 +289,7 @@ export default function ActionScreen({ navigation }) {
 
         <View style={styles.historyHeader}>
           <Text style={styles.historyTitle}>Últimas acciones enviadas</Text>
+
           <TouchableOpacity onPress={() => navigation.navigate("Historial")}>
             <Text style={styles.viewAll}>Ver Todo</Text>
           </TouchableOpacity>
@@ -253,6 +315,7 @@ export default function ActionScreen({ navigation }) {
 
                   <View>
                     <Text style={styles.historyAction}>{cmd.action}</Text>
+
                     <Text style={styles.historyTime}>
                       {cmd.timestamp
                         ? new Date(cmd.timestamp).toLocaleTimeString()
@@ -283,6 +346,7 @@ export default function ActionScreen({ navigation }) {
           <Text style={styles.emptyText}>Todavía no se enviaron acciones.</Text>
         )}
       </ScrollView>
+
       <BottomNavBar navigation={navigation} active="Acciones" />
     </View>
   );
