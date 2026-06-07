@@ -8,6 +8,7 @@ import {
   Alert,
 } from "react-native";
 
+import BottomNavBar from "../components/BottomNavBar";
 import { register } from "../services/api";
 import { styles } from "../styles/registerStyles";
 

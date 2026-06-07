@@ -195,18 +195,21 @@ export const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
-  },
+    padding: 0,
+    },
 
   stopButton: {
     backgroundColor: "rgba(239,68,68,0.18)",
     borderColor: COLORS.error,
   },
-
+  
   dpadText: {
     color: COLORS.text,
-    fontSize: 22,
-    fontWeight: "800",
-  },
+    fontSize: 18,
+    fontWeight: "900",
+    textAlign: "center",
+    lineHeight: 22,
+    },
 
   speedRow: {
     flexDirection: "row",

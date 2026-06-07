@@ -7,6 +7,8 @@ import {
   ScrollView,
 } from "react-native";
 
+import TopAppBar from "../components/TopAppBar";
+import BottomNavBar from "../components/BottomNavBar";
 import { useAuth } from "../context/AuthContext";
 import { useRobot } from "../context/RobotContext";
 import { getCommandHistory } from "../services/api";
@@ -19,13 +21,11 @@ const ROBOTS = {
     label: "Unitree Go2",
     emoji: "🐾",
     description: "Quadruped Bionic",
-    badge: "Disponible",
   },
   g1: {
     label: "Unitree G1",
     emoji: "🤖",
     description: "Humanoid Agent",
-    badge: "No detectado",
   },
 };
 
@@ -110,14 +110,7 @@ export default function ConnectionScreen({ navigation }) {
 
   return (
     <View style={styles.screen}>
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Text style={styles.headerIcon}>⚙️</Text>
-          <Text style={styles.headerTitle}>Unitree Control</Text>
-        </View>
-
-        <Text style={styles.headerSignal}>⌁</Text>
-      </View>
+      <TopAppBar showLogout onLogout={logout} />
 
       <ScrollView contentContainerStyle={styles.container}>
         <View style={[styles.card, styles.statusCard]}>
@@ -228,26 +221,6 @@ export default function ConnectionScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.quickLinks}>
-          <TouchableOpacity onPress={() => navigation.navigate("Movimiento")}>
-            <Text style={styles.quickLinkText}>⚙ Movimiento</Text>
-          </TouchableOpacity>
-
-          <Text style={styles.slash}>/</Text>
-
-          <TouchableOpacity onPress={() => navigation.navigate("Acciones")}>
-            <Text style={styles.quickLinkText}>▦ Acciones</Text>
-          </TouchableOpacity>
-
-          <Text style={styles.slash}>/</Text>
-
-          <TouchableOpacity onPress={logout}>
-            <Text style={[styles.quickLinkText, styles.quickLinkDanger]}>
-              ⏎ Cerrar sesión
-            </Text>
-          </TouchableOpacity>
-        </View>
-
         {combinedHistory.length > 0 && (
           <View style={styles.card}>
             <Text style={styles.sectionTitle}>ÚLTIMOS COMANDOS</Text>
@@ -293,6 +266,7 @@ export default function ConnectionScreen({ navigation }) {
           </View>
         )}
       </ScrollView>
+      <BottomNavBar navigation={navigation} active="Conexion" />
     </View>
   );
 }

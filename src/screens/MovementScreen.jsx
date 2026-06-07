@@ -6,6 +6,8 @@ import {
   ScrollView,
 } from "react-native";
 
+import TopAppBar from "../components/TopAppBar";
+import BottomNavBar from "../components/BottomNavBar";
 import { useAuth } from "../context/AuthContext";
 import { useRobot } from "../context/RobotContext";
 import JoystickControl from "../components/JoystickControl";
@@ -31,7 +33,7 @@ const SPEED_VALUES = {
   fast: 0.7,
 };
 
-export default function MovementScreen() {
+export default function MovementScreen({ navigation }) {
   const { token } = useAuth();
   const { connectionState, robotType } = useRobot();
 
@@ -147,12 +149,8 @@ export default function MovementScreen() {
   if (!isConnected) {
     return (
       <View style={styles.screen}>
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.headerIcon}>⚙️</Text>
-            <Text style={styles.headerTitle}>Unitree Control</Text>
-          </View>
-        </View>
+        <TopAppBar />
+
 
         <View style={styles.container}>
           <View style={styles.disconnectedBox}>
@@ -161,23 +159,14 @@ export default function MovementScreen() {
             </Text>
           </View>
         </View>
+        <BottomNavBar navigation={navigation} active="Movimiento" />
       </View>
     );
   }
 
   return (
     <View style={styles.screen}>
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Text style={styles.headerIcon}>⚙️</Text>
-          <Text style={styles.headerTitle}>Unitree Control</Text>
-        </View>
-
-        <View style={styles.connectedBadge}>
-          <View style={styles.connectedDot} />
-          <Text style={styles.connectedText}>CONECTADO</Text>
-        </View>
-      </View>
+      <TopAppBar />
 
       <ScrollView contentContainerStyle={styles.container}>
         <View style={[styles.card, styles.robotCard]}>
@@ -238,7 +227,7 @@ export default function MovementScreen() {
               disabled={loading}
               onPress={() => sendMove("Avanzando", speedValue, 0, 0)}
             >
-              <Text style={styles.dpadText}>⌃</Text>
+              <Text style={styles.dpadText}>▲</Text>
             </TouchableOpacity>
 
             <View style={styles.controlsRow}>
@@ -247,7 +236,7 @@ export default function MovementScreen() {
                 disabled={loading}
                 onPress={() => sendMove("Lateral izquierda", 0, speedValue, 0)}
               >
-                <Text style={styles.dpadText}>‹</Text>
+                <Text style={styles.dpadText}>◀</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -255,7 +244,7 @@ export default function MovementScreen() {
                 disabled={loading}
                 onPress={() => sendSimpleCommand("Detener", stopRobot)}
               >
-                <Text style={styles.dpadText}>□</Text>
+                <Text style={styles.dpadText}>■</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -263,7 +252,7 @@ export default function MovementScreen() {
                 disabled={loading}
                 onPress={() => sendMove("Lateral derecha", 0, -speedValue, 0)}
               >
-                <Text style={styles.dpadText}>›</Text>
+                <Text style={styles.dpadText}>▶</Text>
               </TouchableOpacity>
             </View>
 
@@ -272,7 +261,7 @@ export default function MovementScreen() {
               disabled={loading}
               onPress={() => sendMove("Retrocediendo", -speedValue, 0, 0)}
             >
-              <Text style={styles.dpadText}>⌄</Text>
+              <Text style={styles.dpadText}>▼</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -334,7 +323,7 @@ export default function MovementScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.smallButton, styles.safeButton]}
+              style={[styles.smallButton]}
               onPress={() => sendSimpleCommand("Modo seguro", dampRobot)}
             >
               <Text style={styles.smallButtonText}>MODO SEGURO</Text>
@@ -415,6 +404,7 @@ export default function MovementScreen() {
 
         {feedback ? <Text style={styles.feedback}>{feedback}</Text> : null}
       </ScrollView>
+      <BottomNavBar navigation={navigation} active="Movimiento" />
     </View>
   );
 }
