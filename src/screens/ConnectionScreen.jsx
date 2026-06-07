@@ -1,37 +1,59 @@
 import { useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, FlatList } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+} from "react-native";
+
 import { useAuth } from "../context/AuthContext";
 import { useRobot } from "../context/RobotContext";
 import { getCommandHistory } from "../services/api";
 import { useIsFocused } from "@react-navigation/native";
+import { styles } from "../styles/connectionStyles";
+
 
 const ROBOTS = {
-  go2: { label: "Go2", emoji: "🐕", description: "Cuadrupedo" },
-  g1:  { label: "G1",  emoji: "🤖", description: "Humanoide"  },
-};
-
-const STATE_COLOR = {
-  connected:    "#22c55e",
-  disconnected: "#94a3b8",
-  error:        "#ef4444",
+  go2: {
+    label: "Unitree Go2",
+    emoji: "🐾",
+    description: "Quadruped Bionic",
+    badge: "Disponible",
+  },
+  g1: {
+    label: "Unitree G1",
+    emoji: "🤖",
+    description: "Humanoid Agent",
+    badge: "No detectado",
+  },
 };
 
 const STATE_LABEL = {
-  connected:    "Conectado",
+  connected: "Conectado",
   disconnected: "Desconectado",
-  error:        "Error",
+  error: "Error",
 };
 
-export default function ConnectionScreen({ navigation}) {
+const STATE_ICON = {
+  connected: "🔗",
+  disconnected: "🔌",
+  error: "⚠️",
+};
+
+export default function ConnectionScreen({ navigation }) {
   const {
-    robotType, setRobotType,
-    networkInterface, setNetworkInterface,
+    robotType,
+    setRobotType,
+    networkInterface,
+    setNetworkInterface,
     connectionState,
     statusData,
     isReconnecting,
     connect,
     disconnect,
   } = useRobot();
+
   const { logout, token, username } = useAuth();
   const isFocused = useIsFocused();
 
@@ -47,7 +69,6 @@ export default function ConnectionScreen({ navigation}) {
 
   const loadCombinedHistory = async () => {
     try {
-      if (!token || !username) return;
       const history = await getCommandHistory(token, username);
       setCombinedHistory(history.slice(0, 5));
     } catch (e) {
@@ -57,38 +78,13 @@ export default function ConnectionScreen({ navigation}) {
 
   const getRobotEmoji = (type) => ROBOTS[type]?.emoji || "❓";
 
-  const historyRenderItem = () => {
-    return combinedHistory.map((cmd, idx) => {
-      const robotType = cmd.robotType || "unknown";
-      return (
-        <View key={idx} style={styles.historyItem}>
-          <View style={styles.historyHeader}>
-            <Text style={styles.historyRobot}>
-              {getRobotEmoji(robotType)} {cmd.action}
-            </Text>
-            <Text style={[styles.historyStatus, cmd.status === "success" ? styles.historySuccess : styles.historyFailed]}>
-              {cmd.status === "success" ? "OK" : "Error"}
-            </Text>
-          </View>
-          <Text style={styles.historyTime}>
-            {cmd.timestamp ? new Date(cmd.timestamp).toLocaleTimeString() : ""}
-          </Text>
-        </View>
-      );
-    });
-  };
-
-  console.log("[ConnectionScreen] render: connectionState=", connectionState, "robotType=", robotType, "networkInterface=", networkInterface, "isReconnecting=", isReconnecting);
-
   const handleConnect = async () => {
-    console.log("[ConnectionScreen] handleConnect: iniciando conexión con robotType=", robotType, "networkInterface=", networkInterface);
     setError("");
     setLoading(true);
+
     try {
       await connect();
-      console.log("[ConnectionScreen] handleConnect: conexión exitosa");
     } catch (e) {
-      console.log("[ConnectionScreen] handleConnect: error:", e.message);
       setError(e.message);
     } finally {
       setLoading(false);
@@ -96,157 +92,207 @@ export default function ConnectionScreen({ navigation}) {
   };
 
   const handleDisconnect = async () => {
-    console.log("[ConnectionScreen] handleDisconnect: desconectando...");
     setError("");
     setLoading(true);
+
     try {
       await disconnect();
-      console.log("[ConnectionScreen] handleDisconnect: desconectado OK");
     } catch (e) {
-      console.log("[ConnectionScreen] handleDisconnect: error:", e.message);
       setError(e.message);
     } finally {
       setLoading(false);
     }
   };
 
+  const statusText = isReconnecting
+    ? "Reconectando..."
+    : STATE_LABEL[connectionState];
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <View style={styles.screen}>
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <Text style={styles.headerIcon}>⚙️</Text>
+          <Text style={styles.headerTitle}>Unitree Control</Text>
+        </View>
 
-      {/* Indicador de estado */}
-      <View style={[styles.statusBadge, { backgroundColor: STATE_COLOR[connectionState] }]}>
-        <Text style={styles.statusText}>
-          {isReconnecting ? "🔄 Reconectando..." : STATE_LABEL[connectionState]}
-        </Text>
+        <Text style={styles.headerSignal}>⌁</Text>
       </View>
 
-      {/* Selector de robot */}
-      <Text style={styles.label}>Tipo de robot</Text>
-      <View style={styles.robotSelector}>
-        {Object.entries(ROBOTS).map(([key, robot]) => (
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={[styles.card, styles.statusCard]}>
+          <View>
+            <Text style={styles.labelCaps}>SISTEMA CENTRAL</Text>
+            <Text style={styles.statusTitle}>Estado: {statusText}</Text>
+          </View>
+
+          <View style={styles.statusIconBox}>
+            <Text style={styles.statusIcon}>{STATE_ICON[connectionState]}</Text>
+          </View>
+        </View>
+
+        <Text style={styles.sectionTitle}>SELECCIONAR ROBOT</Text>
+
+        <View style={styles.robotSelector}>
+          {Object.entries(ROBOTS).map(([key, robot]) => {
+            const selected = robotType === key;
+
+            return (
+              <TouchableOpacity
+                key={key}
+                style={[
+                  styles.robotCard,
+                  selected && styles.robotCardSelected,
+                ]}
+                onPress={() => setRobotType(key)}
+              >
+                <View style={styles.robotTop}>
+                  <View style={styles.robotIconBox}>
+                    <Text style={styles.robotIcon}>{robot.emoji}</Text>
+                  </View>
+
+                  <View
+                    style={[
+                      styles.robotBadge,
+                      key === "go2"
+                        ? styles.robotBadgeAvailable
+                        : styles.robotBadgeUnavailable,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.robotBadgeText,
+                        key === "go2"
+                          ? styles.robotBadgeTextAvailable
+                          : styles.robotBadgeTextUnavailable,
+                      ]}
+                    >
+                      {robot.badge}
+                    </Text>
+                  </View>
+                </View>
+
+                <Text style={styles.robotName}>{robot.label}</Text>
+                <Text style={styles.robotDescription}>
+                  {robot.description}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        <View style={[styles.card, styles.networkCard]}>
+          <Text style={styles.networkHeader}>‹› CONFIGURACIÓN DE RED</Text>
+
+          <Text style={styles.labelCaps}>INTERFAZ DE RED</Text>
+
+          <TextInput
+            style={styles.input}
+            value={networkInterface}
+            onChangeText={setNetworkInterface}
+            autoCapitalize="none"
+            placeholder="eth0"
+            placeholderTextColor="#666a73"
+          />
+        </View>
+
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+
+        <View style={styles.actionRow}>
           <TouchableOpacity
-            key={key}
-            style={[styles.robotCard, robotType === key && styles.robotCardSelected]}
-            onPress={() => {
-              console.log("[ConnectionScreen] robotType cambiado a:", key);
-              setRobotType(key);
-            }}
+            style={[
+              styles.connectButton,
+              (loading || connectionState === "connected") &&
+                styles.buttonDisabled,
+            ]}
+            onPress={handleConnect}
+            disabled={loading || connectionState === "connected"}
           >
-            <Text style={styles.robotEmoji}>{robot.emoji}</Text>
-            <Text style={styles.robotLabel}>{robot.label}</Text>
-            <Text style={styles.robotDesc}>{robot.description}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Interfaz de red */}
-      <Text style={styles.label}>Interfaz de red</Text>
-      <TextInput
-        style={styles.input}
-        value={networkInterface}
-        onChangeText={(val) => {
-          console.log("[ConnectionScreen] networkInterface cambiado a:", val);
-          setNetworkInterface(val);
-        }}
-        autoCapitalize="none"
-        placeholder="eth0"
-      />
-
-      {/* Error */}
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-
-      {/* Botones */}
-      <TouchableOpacity
-        style={[styles.button, styles.buttonConnect, (loading || connectionState === "connected") && styles.buttonDisabled]}
-        onPress={handleConnect}
-        disabled={loading || connectionState === "connected"}
-      >
-        <Text style={styles.buttonText}>{loading && connectionState !== "connected" ? "Conectando..." : "Conectar"}</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.button, styles.buttonDisconnect, (loading || connectionState === "disconnected") && styles.buttonDisabled]}
-        onPress={handleDisconnect}
-        disabled={loading || connectionState === "disconnected"}
-      >
-        <Text style={styles.buttonText}>{loading && connectionState === "connected" ? "Desconectando..." : "Desconectar"}</Text>
-      </TouchableOpacity>
-
-      <View style={{ flexDirection: "row", gap: 12 }}>
-        <TouchableOpacity
-          style={[styles.button, { backgroundColor: "#0f172a", flex: 1 }]}
-          onPress={() => navigation.navigate("Movimiento")}
-        >
-          <Text style={styles.buttonText}>Movimiento</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.button, { backgroundColor: "#0f172a", flex: 1 }]}
-          onPress={() => navigation.navigate("Acciones")}
-        >
-          <Text style={styles.buttonText}>Acciones</Text>
-        </TouchableOpacity>
-      </View>
-
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: "#ef4444" }]}
-        onPress={logout}
-      >
-        <Text style={styles.buttonText}>Cerrar sesion</Text>
-      </TouchableOpacity>
-
-      {/* Historial combinado */}
-      {combinedHistory.length > 0 && (
-        <>
-          <Text style={styles.label}>Ultimos comandos (todos los robots)</Text>
-          <View style={styles.historyList}>
-            {historyRenderItem()}
-          </View>
-        </>
-      )}
-
-      {/* Diagnostico */}
-      {statusData && (
-        <>
-          <Text style={styles.label}>Diagnostico</Text>
-          <View style={styles.diagnostics}>
-            <Text style={styles.diagnosticsText}>
-              {JSON.stringify(statusData, null, 2)}
+            <Text style={styles.connectText}>
+              ⚡ {loading ? "CONECTANDO..." : "CONECTAR"}
             </Text>
-          </View>
-        </>
-      )}
+          </TouchableOpacity>
 
-    </ScrollView>
+          <TouchableOpacity
+            style={[
+              styles.disconnectButton,
+              (loading || connectionState === "disconnected") &&
+                styles.buttonDisabled,
+            ]}
+            onPress={handleDisconnect}
+            disabled={loading || connectionState === "disconnected"}
+          >
+            <Text style={styles.disconnectText}>
+              ⛓ {loading ? "DESCONECTANDO..." : "DESCONECTAR"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.quickLinks}>
+          <TouchableOpacity onPress={() => navigation.navigate("Movimiento")}>
+            <Text style={styles.quickLinkText}>⚙ Movimiento</Text>
+          </TouchableOpacity>
+
+          <Text style={styles.slash}>/</Text>
+
+          <TouchableOpacity onPress={() => navigation.navigate("Acciones")}>
+            <Text style={styles.quickLinkText}>▦ Acciones</Text>
+          </TouchableOpacity>
+
+          <Text style={styles.slash}>/</Text>
+
+          <TouchableOpacity onPress={logout}>
+            <Text style={[styles.quickLinkText, styles.quickLinkDanger]}>
+              ⏎ Cerrar sesión
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {combinedHistory.length > 0 && (
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>ÚLTIMOS COMANDOS</Text>
+
+            {combinedHistory.map((cmd, idx) => (
+              <View key={idx} style={styles.historyItem}>
+                <View style={styles.historyHeader}>
+                  <Text style={styles.historyRobot}>
+                    {getRobotEmoji(cmd.robotType)} {cmd.action}
+                  </Text>
+
+                  <Text
+                    style={[
+                      styles.historyStatus,
+                      cmd.status === "success"
+                        ? styles.historySuccess
+                        : styles.historyFailed,
+                    ]}
+                  >
+                    {cmd.status === "success" ? "OK" : "Error"}
+                  </Text>
+                </View>
+
+                <Text style={styles.historyTime}>
+                  {cmd.timestamp
+                    ? new Date(cmd.timestamp).toLocaleTimeString()
+                    : ""}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {statusData && (
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>DIAGNOSTIC_LOG</Text>
+
+            <View style={styles.diagnostics}>
+              <Text style={styles.diagnosticsText}>
+                {JSON.stringify(statusData, null, 2)}
+              </Text>
+            </View>
+          </View>
+        )}
+      </ScrollView>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container:        { padding: 20, paddingTop: 40 },
-  statusBadge:      { borderRadius: 20, paddingVertical: 8, paddingHorizontal: 20, alignSelf: "center", marginBottom: 24 },
-  statusText:       { color: "#fff", fontWeight: "bold", fontSize: 16 },
-  label:            { fontSize: 14, fontWeight: "600", color: "#475569", marginBottom: 8, marginTop: 16 },
-  robotSelector:    { flexDirection: "row", gap: 12 },
-  robotCard:        { flex: 1, borderWidth: 2, borderColor: "#e2e8f0", borderRadius: 12, padding: 16, alignItems: "center" },
-  robotCardSelected:{ borderColor: "#3b82f6", backgroundColor: "#eff6ff" },
-  robotEmoji:       { fontSize: 36 },
-  robotLabel:       { fontWeight: "bold", fontSize: 16, marginTop: 4 },
-  robotDesc:        { fontSize: 12, color: "#94a3b8" },
-  input:            { borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 8, padding: 10 },
-  error:            { color: "#ef4444", textAlign: "center", marginTop: 8 },
-  button:           { borderRadius: 10, padding: 14, alignItems: "center", marginTop: 12 },
-  buttonConnect:    { backgroundColor: "#3b82f6" },
-  buttonDisconnect: { backgroundColor: "#64748b" },
-  buttonDisabled:   { opacity: 0.4 },
-  buttonText:       { color: "#fff", fontWeight: "bold", fontSize: 16 },
-  diagnostics:      { backgroundColor: "#1e293b", borderRadius: 10, padding: 16, marginTop: 8 },
-  diagnosticsText:  { color: "#94a3b8", fontFamily: "monospace", fontSize: 12 },
-  historyList:      { backgroundColor: "#fff", borderRadius: 12, borderWidth: 1, borderColor: "#e2e8f0", overflow: "hidden" },
-  historyItem:      { borderBottomWidth: 1, borderBottomColor: "#e2e8f0", padding: 12 },
-  historyHeader:    { flexDirection: "row", justifyContent: "space-between", marginBottom: 4 },
-  historyRobot:     { fontSize: 14, fontWeight: "600", color: "#0f172a" },
-  historyStatus:    { fontSize: 12, fontWeight: "bold", textTransform: "uppercase" },
-  historySuccess:   { color: "#16a34a" },
-  historyFailed:    { color: "#dc2626" },
-  historyTime:      { fontSize: 11, color: "#94a3b8" },
-});
