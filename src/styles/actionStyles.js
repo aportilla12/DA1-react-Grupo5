@@ -85,7 +85,7 @@ export const styles = StyleSheet.create({
 
   actionButton: {
     width: "49%",
-    height: 95,
+    height: 80,
     backgroundColor: COLORS.surfaceLow,
     borderWidth: 1,
     borderColor: COLORS.border,

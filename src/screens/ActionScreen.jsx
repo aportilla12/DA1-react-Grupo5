@@ -275,7 +275,6 @@ export default function ActionScreen({ navigation }) {
                     <ActivityIndicator size="small" color="#64FFDA" />
                   ) : (
                     <>
-                      <Text style={styles.actionIcon}>{icon}</Text>
                       <Text style={styles.actionText}>{label}</Text>
                     </>
                   )}
