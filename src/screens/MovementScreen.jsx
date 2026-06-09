@@ -41,6 +41,7 @@ export default function MovementScreen({ navigation }) {
   const [feedback, setFeedback] = useState("");
   const [lastCommand, setLastCommand] = useState("");
   const [speedMode, setSpeedMode] = useState("precision");
+  const [joystickActive, setJoystickActive] = useState(false);
 
   const [telemetry, setTelemetry] = useState({
     vx: 0,
@@ -168,7 +169,7 @@ export default function MovementScreen({ navigation }) {
     <View style={styles.screen}>
       <TopAppBar />
 
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView scrollEnabled={!joystickActive} contentContainerStyle={styles.container}>
         <View style={[styles.card, styles.robotCard]}>
           <View style={styles.robotAvatar}>
             <Text style={styles.robotAvatarText}>{currentRobotIcon}</Text>
@@ -272,6 +273,8 @@ export default function MovementScreen({ navigation }) {
           onMove={handleJoystickMove}
           onStop={handleJoystickStop}
           onTelemetryChange={setTelemetry}
+          onTouchStart={() => setJoystickActive(true)}
+          onTouchEnd={() => setJoystickActive(false)}
         />
 
         <View style={styles.card}>

@@ -23,6 +23,9 @@ export default function JoystickControl({
   onMove,
   onStop,
   onTelemetryChange,
+  onTouchStart,
+  onTouchEnd,
+
 }) {
   const position = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
   const lastSentAt = useRef(0);
@@ -118,12 +121,17 @@ export default function JoystickControl({
     if (!disabled && onStop) {
       await onStop();
     }
+
+    onTouchEnd?.();
   };
 
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => !disabled,
       onMoveShouldSetPanResponder: () => !disabled,
+      onPanResponderGrant: () => {
+        onTouchStart?.();
+      },
 
       onPanResponderMove: (_, gestureState) => {
         const movement = calculateMovement(
