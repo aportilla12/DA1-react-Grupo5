@@ -1,7 +1,7 @@
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export const API_BASE_URL = "http://192.168.0.193:8000";
+export const API_BASE_URL = "http://10.100.80.137:8000";
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -34,7 +34,7 @@ export const register = (username, email, password) =>
 
 export const connectRobot = (token, robotType = "go2", networkInterface = "eth0") => {
   setAuthToken(token);
-  return apiClient.post("/connect", { robot_type: robotType, network_interface: networkInterface }).then((r) => r.data);
+  return apiClient.post("/connect", { robot_type: robotType }).then((r) => r.data);
 };
 
 export const disconnectRobot = (token) => {
