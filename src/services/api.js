@@ -1,7 +1,7 @@
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export const API_BASE_URL = "http://localhost:8000";
+export const API_BASE_URL = "http://10.100.80.137:8000";
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -16,7 +16,6 @@ apiClient.interceptors.response.use(
     return Promise.reject(new Error(msg));
   }
 );
-
 export function setAuthToken(token) {
   if (token) {
     apiClient.defaults.headers.common.Authorization = `Bearer ${token}`;
@@ -35,7 +34,7 @@ export const register = (username, email, password) =>
 
 export const connectRobot = (token, robotType = "go2", networkInterface = "eth0") => {
   setAuthToken(token);
-  return apiClient.post("/connect", { robot_type: robotType, network_interface: networkInterface }).then((r) => r.data);
+  return apiClient.post("/connect", { robot_type: robotType }).then((r) => r.data);
 };
 
 export const disconnectRobot = (token) => {
@@ -95,7 +94,9 @@ export const getActions = (token) => {
 
 export const executeAction = (token, actionName) => {
   setAuthToken(token);
-  return apiClient.post(`/action/${actionName}`).then((r) => r.data);
+  return apiClient
+    .post(`/action/${encodeURIComponent(actionName)}`)
+    .then((r) => r.data);
 };
 
 export const saveCommandHistory = async (token, robotType, action, status, details, username = "default") => {

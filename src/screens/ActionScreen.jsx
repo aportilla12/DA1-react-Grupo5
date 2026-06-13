@@ -3,19 +3,116 @@ import {
   View,
   Text,
   TouchableOpacity,
-  StyleSheet,
   ScrollView,
   ActivityIndicator,
 } from "react-native";
+
+import TopAppBar from "../components/TopAppBar";
+import BottomNavBar from "../components/BottomNavBar";
 import { useIsFocused } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
 import { useRobot } from "../context/RobotContext";
+
 import {
   getActions,
   executeAction,
   saveCommandHistory,
-  getCommandHistory
+  getCommandHistory,
 } from "../services/api";
+
+import { styles } from "../styles/actionStyles";
+
+const ACTION_LABELS = {
+  hello: "Saludar",
+  stretch: "Estirar",
+  dance1: "Baile 1",
+  dance2: "Baile 2",
+  heart: "Corazón",
+  flips: "Volteretas",
+  balance_stand: "Balance",
+  recovery_stand: "Recuperarse",
+
+  wave_hand: "Saludar mano",
+  wave_hand_turn: "Saludo giro",
+  shake_hand: "Dar mano",
+  high_stand: "Postura alta",
+  low_stand: "Postura baja",
+
+  release_arm: "Soltar brazo",
+  shake_hand_arm: "Dar mano brazo",
+  high_five: "Chocar cinco",
+  hug: "Abrazo",
+  clap: "Aplaudir",
+};
+
+const ACTION_ICONS = {
+  hello: "👋",
+  stretch: "🧘",
+  dance1: "🕺",
+  dance2: "💃",
+  heart: "💙",
+  flips: "🤸",
+  balance_stand: "⚖️",
+  recovery_stand: "↺",
+
+  wave_hand: "👋",
+  wave_hand_turn: "🔄",
+  shake_hand: "🤝",
+  high_stand: "⬆️",
+  low_stand: "⬇️",
+
+  release_arm: "🦾",
+  shake_hand_arm: "🤝",
+  high_five: "✋",
+  hug: "🫂",
+  clap: "👏",
+};
+
+function getActionName(actionItem) {
+  if (!actionItem) return "";
+  if (typeof actionItem === "string") return actionItem;
+  return actionItem.name || actionItem.action || actionItem.action_name || "";
+}
+
+function normalizeActions(data) {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.actions)) return data.actions;
+  if (Array.isArray(data?.available_actions)) return data.available_actions;
+  return [];
+}
+
+function formatActionName(actionName) {
+  if (!actionName) return "Acción";
+
+  if (ACTION_LABELS[actionName]) return ACTION_LABELS[actionName];
+
+  return String(actionName)
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function getActionIcon(actionNameOrLabel) {
+  const raw = String(actionNameOrLabel || "");
+  const normalized = raw
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replaceAll(" ", "_");
+
+  if (ACTION_ICONS[raw]) return ACTION_ICONS[raw];
+  if (ACTION_ICONS[normalized]) return ACTION_ICONS[normalized];
+
+  if (normalized.includes("saludar")) return "👋";
+  if (normalized.includes("baile") || normalized.includes("dance")) return "🕺";
+  if (normalized.includes("corazon") || normalized.includes("heart")) return "💙";
+  if (normalized.includes("voltereta") || normalized.includes("flip")) return "🤸";
+  if (normalized.includes("balance")) return "⚖️";
+  if (normalized.includes("mano") || normalized.includes("hand")) return "🤝";
+  if (normalized.includes("abrazo") || normalized.includes("hug")) return "🫂";
+  if (normalized.includes("aplaudir") || normalized.includes("clap")) return "👏";
+
+  return "▣";
+}
 
 export default function ActionScreen({ navigation }) {
   const { token, username } = useAuth();
@@ -24,7 +121,7 @@ export default function ActionScreen({ navigation }) {
 
   const [actions, setActions] = useState([]);
   const [loadingActions, setLoadingActions] = useState(false);
-  const [loadingExecute, setLoadingExecute] = useState(false);
+  const [executingAction, setExecutingAction] = useState(null);
   const [feedback, setFeedback] = useState("");
   const [localHistory, setLocalHistory] = useState([]);
 
@@ -33,8 +130,10 @@ export default function ActionScreen({ navigation }) {
   useEffect(() => {
     if (isConnected && token) {
       fetchActions();
+    } else {
+      setActions([]);
     }
-  }, [isConnected, token]);
+  }, [isConnected, token, robotType]);
 
   useEffect(() => {
     if (isFocused && token && username) {
@@ -54,13 +153,15 @@ export default function ActionScreen({ navigation }) {
   const fetchActions = async () => {
     try {
       setLoadingActions(true);
+      setFeedback("");
+
       const data = await getActions(token);
-      // Asumimos que data es un array de acciones, por ejemplo [{ name: "action1", description: "..." }]
-      // O tal vez es solo un array de strings ["action1", "action2"].
-      // El backend unitree_robot_api: GET /actions -> return ["action1", "action2", ...]
-      setActions(data.actions || data);
+      const normalized = normalizeActions(data);
+
+      setActions(normalized);
     } catch (e) {
-      console.log("[ActionScreen] Error fetching actions:", e.message);
+      setActions([]);
+      setFeedback(e.message || "No se pudieron cargar las acciones.");
     } finally {
       setLoadingActions(false);
     }
@@ -68,6 +169,7 @@ export default function ActionScreen({ navigation }) {
 
   const recordCommand = async (action, success, details = null) => {
     if (!token || !username) return;
+
     try {
       const newCmd = await saveCommandHistory(
         token,
@@ -77,6 +179,7 @@ export default function ActionScreen({ navigation }) {
         details,
         username
       );
+
       setLocalHistory((prev) => [newCmd, ...prev].slice(0, 5));
     } catch (e) {
       console.log("[ActionScreen] recordCommand error:", e.message);
@@ -85,225 +188,165 @@ export default function ActionScreen({ navigation }) {
 
   const handleExecuteAction = async (actionItem) => {
     if (!isConnected || !token) return;
-    
-    // Si la accion es un objeto, usamos el name, si no, el string directo
-    const actionName = actionItem.name || actionItem;
 
-    setLoadingExecute(true);
+    const actionName = getActionName(actionItem);
+    const actionLabel = formatActionName(actionName);
+
+    if (!actionName) {
+      setFeedback("Acción inválida.");
+      return;
+    }
+
+    setExecutingAction(actionName);
     setFeedback("");
-    
+
     try {
       await executeAction(token, actionName);
-      setFeedback(`Acción "${actionName}" ejecutada correctamente.`);
-      await recordCommand(actionName, true);
+
+      setFeedback(`Acción "${actionLabel}" ejecutada correctamente.`);
+      await recordCommand(actionLabel, true);
     } catch (e) {
-      const errorMessage = e.message || `Error al ejecutar "${actionName}"`;
+      const errorMessage = e.message || `Error al ejecutar "${actionLabel}"`;
       setFeedback(errorMessage);
-      await recordCommand(actionName, false, errorMessage);
+      await recordCommand(actionLabel, false, errorMessage);
     } finally {
-      setLoadingExecute(false);
+      setExecutingAction(null);
     }
   };
 
   if (!isConnected) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>Acciones del Robot</Text>
-        <View style={styles.disconnectedBox}>
-          <Text style={styles.disconnectedText}>
-            Primero tenes que conectar el robot para ver las acciones.
-          </Text>
+      <View style={styles.screen}>
+        <TopAppBar />
+
+        <View style={styles.disconnectedContent}>
+          <Text style={styles.title}>Acciones del Robot</Text>
+
+          <View style={styles.disconnectedBox}>
+            <Text style={styles.disconnectedText}>
+              Primero tenés que conectar el robot para ver las acciones.
+            </Text>
+          </View>
         </View>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.backButtonText}>Volver</Text>
-        </TouchableOpacity>
+
+        <BottomNavBar navigation={navigation} active="Acciones" />
       </View>
     );
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Acciones del Robot</Text>
-      
-      {loadingActions ? (
-        <ActivityIndicator size="large" color="#3b82f6" />
-      ) : actions.length > 0 ? (
-        <View style={styles.grid}>
-          {actions.map((action, idx) => {
-            const actionName = action.name || action;
+    <View style={styles.screen}>
+      <TopAppBar />
+
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.title}>Acciones del Robot</Text>
+
+        <Text style={styles.subtitle}>
+          Ejecutá protocolos disponibles para el robot conectado.
+        </Text>
+
+        {feedback ? (
+          <View style={styles.feedbackBox}>
+            <Text style={styles.feedbackText}>{feedback}</Text>
+          </View>
+        ) : null}
+
+        {loadingActions ? (
+          <ActivityIndicator size="large" color="#b9c7e4" />
+        ) : actions.length > 0 ? (
+          <View style={styles.grid}>
+            {actions.map((action, idx) => {
+              const actionName = getActionName(action);
+              const label = formatActionName(actionName);
+              const icon = getActionIcon(actionName);
+              const isExecuting = executingAction === actionName;
+
+              return (
+                <TouchableOpacity
+                  key={`${actionName}-${idx}`}
+                  style={[
+                    styles.actionButton,
+                    executingAction && styles.actionButtonDisabled,
+                  ]}
+                  disabled={!!executingAction}
+                  onPress={() => handleExecuteAction(action)}
+                >
+                  {isExecuting ? (
+                    <ActivityIndicator size="small" color="#64FFDA" />
+                  ) : (
+                    <>
+                      <Text style={styles.actionText}>{label}</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        ) : (
+          <Text style={styles.emptyText}>No hay acciones disponibles.</Text>
+        )}
+
+        <View style={styles.historyHeader}>
+          <Text style={styles.historyTitle}>Últimas acciones enviadas</Text>
+
+          <TouchableOpacity onPress={() => navigation.navigate("Historial")}>
+            <Text style={styles.viewAll}>Ver Todo</Text>
+          </TouchableOpacity>
+        </View>
+
+        {localHistory.length > 0 ? (
+          localHistory.map((cmd, idx) => {
+            const isSuccess = cmd.status === "success";
+
             return (
-              <TouchableOpacity
-                key={idx}
-                style={styles.actionButton}
-                disabled={loadingExecute}
-                onPress={() => handleExecuteAction(action)}
-              >
-                <Text style={styles.actionText}>{actionName}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      ) : (
-        <Text style={styles.emptyText}>No hay acciones disponibles.</Text>
-      )}
-
-      {feedback ? (
-        <View style={styles.feedbackBox}>
-          <Text style={styles.feedbackText}>{feedback}</Text>
-        </View>
-      ) : null}
-
-      {localHistory.length > 0 && (
-        <View style={styles.historyContainer}>
-          <Text style={styles.sectionTitle}>Últimas acciones enviadas</Text>
-          <View style={styles.historyList}>
-            {localHistory.map((cmd, idx) => (
               <View key={idx} style={styles.historyItem}>
-                <View style={styles.historyHeader}>
-                  <Text style={styles.historyAction}>{cmd.action}</Text>
-                  <Text
+                <View style={styles.historyLeft}>
+                  <View
                     style={[
-                      styles.historyStatus,
-                      cmd.status === "success"
-                        ? styles.historySuccess
-                        : styles.historyFailed,
+                      styles.historyIconBox,
+                      !isSuccess && styles.historyIconBoxError,
                     ]}
                   >
-                    {cmd.status === "success" ? "OK" : "Error"}
+                    <Text style={styles.historyIcon}>
+                      {getActionIcon(cmd.action)}
+                    </Text>
+                  </View>
+
+                  <View>
+                    <Text style={styles.historyAction}>{cmd.action}</Text>
+
+                    <Text style={styles.historyTime}>
+                      {cmd.timestamp
+                        ? new Date(cmd.timestamp).toLocaleTimeString()
+                        : ""}
+                    </Text>
+                  </View>
+                </View>
+
+                <View
+                  style={[
+                    styles.statusBadge,
+                    isSuccess ? styles.statusOk : styles.statusError,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.statusText,
+                      isSuccess ? styles.statusOkText : styles.statusErrorText,
+                    ]}
+                  >
+                    {isSuccess ? "● OK" : "● ERROR"}
                   </Text>
                 </View>
-                <Text style={styles.historyTime}>
-                  {cmd.timestamp
-                    ? new Date(cmd.timestamp).toLocaleTimeString()
-                    : ""}
-                </Text>
               </View>
-            ))}
-          </View>
-        </View>
-      )}
-    </ScrollView>
+            );
+          })
+        ) : (
+          <Text style={styles.emptyText}>Todavía no se enviaron acciones.</Text>
+        )}
+      </ScrollView>
+
+      <BottomNavBar navigation={navigation} active="Acciones" />
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    paddingTop: 40,
-    backgroundColor: "#f8fafc",
-    flexGrow: 1,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#0f172a",
-    marginBottom: 20,
-  },
-  disconnectedBox: {
-    backgroundColor: "#fee2e2",
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 20,
-  },
-  disconnectedText: {
-    color: "#941b1b",
-    fontWeight: "bold",
-  },
-  backButton: {
-    backgroundColor: "#64748b",
-    padding: 14,
-    borderRadius: 10,
-    alignItems: "center",
-  },
-  backButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
-  },
-  actionButton: {
-    backgroundColor: "#3b82f6",
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    minWidth: "45%",
-    flexGrow: 1,
-  },
-  actionText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 14,
-    textTransform: "capitalize",
-  },
-  emptyText: {
-    color: "#64748b",
-    fontSize: 16,
-    fontStyle: "italic",
-  },
-  feedbackBox: {
-    marginTop: 20,
-    backgroundColor: "#dcfce7",
-    padding: 12,
-    borderRadius: 10,
-  },
-  feedbackText: {
-    color: "#166534",
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  historyContainer: {
-    marginTop: 30,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#334155",
-    marginBottom: 10,
-  },
-  historyList: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-    overflow: "hidden",
-  },
-  historyItem: {
-    borderBottomWidth: 1,
-    borderBottomColor: "#e2e8f0",
-    padding: 12,
-  },
-  historyHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 4,
-  },
-  historyAction: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#0f172a",
-    textTransform: "capitalize",
-  },
-  historyStatus: {
-    fontSize: 12,
-    fontWeight: "bold",
-    textTransform: "uppercase",
-  },
-  historySuccess: {
-    color: "#16a34a",
-  },
-  historyFailed: {
-    color: "#dc2626",
-  },
-  historyTime: {
-    fontSize: 11,
-    color: "#94a3b8",
-  },
-});
