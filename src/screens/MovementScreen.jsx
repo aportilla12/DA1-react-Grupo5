@@ -25,6 +25,7 @@ import {
   walkuprightRobot,
   crossstepRobot,
     freejumpRobot,
+  saveCommandHistory,
 } from "../services/api";
 
 const SPEED_VALUES = {
@@ -34,7 +35,7 @@ const SPEED_VALUES = {
 };
 
 export default function MovementScreen({ navigation }) {
-  const { token } = useAuth();
+  const { token, username } = useAuth();
   const { connectionState, robotType } = useRobot();
 
   const [loading, setLoading] = useState(false);
@@ -77,6 +78,14 @@ export default function MovementScreen({ navigation }) {
     try {
       await moveRobot(token, vx, vy, vyaw);
       setFeedback(`${label} enviado correctamente`);
+      await saveCommandHistory(
+        token,
+        robotType,
+        label,
+        "success",
+        `vx: ${vx.toFixed(2)}, vy: ${vy.toFixed(2)}`,
+        username
+      );
     } catch (e) {
       setFeedback(e.message || "Error al enviar movimiento");
     } finally {
@@ -94,11 +103,13 @@ export default function MovementScreen({ navigation }) {
     try {
       await commandFn(token);
       setFeedback(`${label} enviado correctamente`);
+      await saveCommandHistory(token, robotType, label, "success", null, username);
 
       if (label === "Detener") {
         updateTelemetry(0, 0, 0, "Detenido");
       }
     } catch (e) {
+      await saveCommandHistory(token, robotType, label, "failed", e.message, username);
       setFeedback(e.message || `Error al ejecutar ${label}`);
     } finally {
       setLoading(false);
@@ -115,7 +126,16 @@ export default function MovementScreen({ navigation }) {
     try {
       await commandFn(token, enable);
       setFeedback(`${label} enviado correctamente`);
+      await saveCommandHistory(
+        token,
+        robotType,
+        label,
+        "success",
+        enable ? "Activado" : "Desactivado",
+        username
+      );
     } catch (e) {
+      await saveCommandHistory(token, robotType, label, "failed", e.message, username);
       setFeedback(e.message || `Error al ejecutar ${label}`);
     } finally {
       setLoading(false);
