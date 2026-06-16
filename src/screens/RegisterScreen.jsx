@@ -110,12 +110,12 @@ export default function RegisterScreen({ navigation }) {
             {error ? <Text style={styles.error}>{error}</Text> : null}
 
             <View style={styles.fieldGroup}>
-              <Text style={styles.label}>👤 USUARIO</Text>
+              <Text style={styles.label}>USUARIO</Text>
 
               <View style={styles.inputWrapper}>
                 <TextInput
                   style={styles.input}
-                  placeholder="Ej. operator_01"
+                  placeholder="Nombre de usuario"
                   placeholderTextColor="#666a73"
                   value={username}
                   onChangeText={setUsername}
@@ -129,12 +129,12 @@ export default function RegisterScreen({ navigation }) {
             </View>
 
             <View style={styles.fieldGroup}>
-              <Text style={styles.label}>@ EMAIL</Text>
+              <Text style={styles.label}>EMAIL</Text>
 
               <View style={styles.inputWrapper}>
                 <TextInput
                   style={styles.input}
-                  placeholder="admin@unitree.tech"
+                  placeholder="Email"
                   placeholderTextColor="#666a73"
                   value={email}
                   onChangeText={setEmail}
@@ -149,7 +149,7 @@ export default function RegisterScreen({ navigation }) {
             </View>
 
             <View style={styles.fieldGroup}>
-              <Text style={styles.label}>🔒 CONTRASEÑA</Text>
+              <Text style={styles.label}>CONTRASEÑA</Text>
 
               <View style={styles.inputWrapper}>
                 <TextInput
@@ -182,7 +182,7 @@ export default function RegisterScreen({ navigation }) {
             </View>
 
             <View style={styles.fieldGroup}>
-              <Text style={styles.label}>🛡️ CONFIRMAR CONTRASEÑA</Text>
+              <Text style={styles.label}>CONFIRMAR CONTRASEÑA</Text>
               <View
                 style={[
                   styles.inputWrapper,
@@ -203,7 +203,7 @@ export default function RegisterScreen({ navigation }) {
               </View>
 
               <Text style={styles.hint}>
-                Los protocolos deben coincidir para la sincronización.
+                Las contraseñas deben coincidir para la sincronización.
               </Text>
             </View>
 
@@ -248,12 +248,12 @@ export default function RegisterScreen({ navigation }) {
           <View style={styles.infoPanel}>
             <View style={styles.infoItem}>
               <Text style={styles.infoLabel}>Encryption</Text>
-              <Text style={styles.infoValue}>🛡 AES-256</Text>
+              <Text style={styles.infoValue}>AES-256</Text>
             </View>
 
             <View style={styles.infoItem}>
               <Text style={styles.infoLabel}>Network</Text>
-              <Text style={styles.infoValue}>⌘ Node.US_West</Text>
+              <Text style={styles.infoValue}>Node.US_West</Text>
             </View>
           </View>
         </View>

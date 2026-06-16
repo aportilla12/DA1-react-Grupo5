@@ -8,7 +8,7 @@ import {
 
 import TopAppBar from "../components/TopAppBar";
 import BottomNavBar from "../components/BottomNavBar";
-import { useAuth } from "../context/AuthContext";
+import { useAuth, username } from "../context/AuthContext";
 import { useRobot } from "../context/RobotContext";
 import JoystickControl from "../components/JoystickControl";
 import { styles } from "../styles/movementStyles";
@@ -67,6 +67,25 @@ export default function MovementScreen({ navigation }) {
     });
   };
 
+  const recordCommand = async (
+    action,
+    success,
+    details = null
+  ) => {
+    try {
+      await saveCommandHistory(
+        token,
+        robotType,
+        action,
+        success ? "success" : "failed",
+        details,
+        username
+      );
+    } catch (e) {
+      console.log("[MovementScreen] history error:", e.message);
+    }
+  };
+
   const sendMove = async (label, vx, vy, vyaw) => {
     if (!isConnected || !token) return;
 
@@ -77,6 +96,7 @@ export default function MovementScreen({ navigation }) {
 
     try {
       await moveRobot(token, vx, vy, vyaw);
+      await recordCommand(label, true);
       setFeedback(`${label} enviado correctamente`);
       await saveCommandHistory(
         token,
@@ -102,6 +122,7 @@ export default function MovementScreen({ navigation }) {
 
     try {
       await commandFn(token);
+      await recordCommand(label, true);
       setFeedback(`${label} enviado correctamente`);
       await saveCommandHistory(token, robotType, label, "success", null, username);
 
@@ -125,6 +146,7 @@ export default function MovementScreen({ navigation }) {
 
     try {
       await commandFn(token, enable);
+      await recordCommand(label, true);
       setFeedback(`${label} enviado correctamente`);
       await saveCommandHistory(
         token,
@@ -158,9 +180,11 @@ export default function MovementScreen({ navigation }) {
 
     try {
       await stopRobot(token);
+      await recordCommand("Stop por joystick", true);
       setLastCommand("Stop por joystick");
       setFeedback("Robot detenido");
     } catch (e) {
+      await recordCommand("Stop por joystick", false, e.message);
       setFeedback(e.message || "Error al detener con joystick");
     }
   };

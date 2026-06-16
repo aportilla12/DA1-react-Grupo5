@@ -30,7 +30,7 @@ export default function TopAppBar({ showLogout = false, onLogout }) {
                 { color: isConnected ? "#22c55e" : "#94a3b8" },
               ]}
             >
-              {isConnected ? "ON" : "OFF"}
+              {isConnected ? "CONECTADO" : "DESCONECTADO"}
             </Text>
           </View>
 
