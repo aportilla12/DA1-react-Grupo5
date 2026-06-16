@@ -1,41 +1,41 @@
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const ITEMS = [
-  { route: "Conexion", label: "Connect", icon: "🔗" },
-  { route: "Movimiento", label: "Move", icon: "🕹️" },
-  { route: "Acciones", label: "Actions", icon: "▦" },
-  { route: "Historial", label: "History", icon: "↺" },
+  { route: "Conexion", label: "Conexion" },
+  { route: "Movimiento", label: "Movimiento" },
+  { route: "Acciones", label: "Acciones" },
+  { route: "Historial", label: "Historial" },
 ];
 
 export default function BottomNavBar({ navigation, active }) {
   return (
-    <View style={styles.container}>
-      {ITEMS.map((item) => {
-        const isActive = active === item.route;
+    <SafeAreaView edges={["bottom"]} style={styles.safeArea}>
+      <View style={styles.container}>
+        {ITEMS.map((item) => {
+          const isActive = active === item.route;
 
-        return (
-          <TouchableOpacity
-            key={item.route}
-            style={[styles.item, isActive && styles.itemActive]}
-            onPress={() => navigation.navigate(item.route)}
-          >
-            <Text style={[styles.icon, isActive && styles.textActive]}>
-              {item.icon}
-            </Text>
+          return (
+            <TouchableOpacity
+              key={item.route}
+              style={[styles.item, isActive && styles.itemActive]}
+              onPress={() => navigation.navigate(item.route)}
+            >
 
-            <Text style={[styles.label, isActive && styles.textActive]}>
-              {item.label}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
-    </View>
+              <Text style={[styles.label, isActive && styles.textActive]}>
+                {item.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    height: 74,
+    height: 60,
     backgroundColor: "#1f1f21",
     borderTopWidth: 1,
     borderTopColor: "#343536",
@@ -45,26 +45,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   item: {
-    minWidth: 65,
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 8,
-    borderRadius: 14,
+    height: "100%",
+    borderRadius: 10,
   },
   itemActive: {
     backgroundColor: "#0a192f",
     borderWidth: 1,
     borderColor: "#39475f",
   },
-  icon: {
-    fontSize: 17,
-    color: "#8f9097",
-  },
   label: {
     fontSize: 10,
-    marginTop: 3,
     color: "#8f9097",
     fontWeight: "800",
+    textAlign: "center",
   },
   textActive: {
     color: "#b9c7e4",

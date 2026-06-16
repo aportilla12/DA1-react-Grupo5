@@ -129,7 +129,6 @@ export default function ConnectionScreen({ navigation }) {
         <View style={styles.robotSelector}>
           {Object.entries(ROBOTS).map(([key, robot]) => {
             const selected = robotType === key;
-
             return (
               <TouchableOpacity
                 key={key}
@@ -143,7 +142,6 @@ export default function ConnectionScreen({ navigation }) {
                   <View style={styles.robotIconBox}>
                     <Text style={styles.robotIcon}>{robot.emoji}</Text>
                   </View>
-
                   <View
                     style={[
                       styles.robotBadge,
@@ -202,7 +200,7 @@ export default function ConnectionScreen({ navigation }) {
             disabled={loading || connectionState === "connected"}
           >
             <Text style={styles.connectText}>
-              ⚡ {loading ? "CONECTANDO..." : "CONECTAR"}
+               {loading ? "CONECTANDO..." : "CONECTAR"}
             </Text>
           </TouchableOpacity>
 

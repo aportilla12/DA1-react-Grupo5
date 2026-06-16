@@ -102,6 +102,11 @@ export const styles = StyleSheet.create({
     marginBottom: 20,
   },
 
+  robotCardSelected: {
+    borderColor: "#64FFDA",
+    opacity: 1,
+  },
+
   robotCard: {
     backgroundColor: "rgba(31,31,33,0.82)",
     borderWidth: 1,
@@ -109,16 +114,12 @@ export const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     padding: SPACING.md,
     opacity: 0.6,
-  },
-
-  robotCardSelected: {
-    borderColor: "#64FFDA",
-    opacity: 1,
+    overflow: "hidden",
   },
 
   robotTop: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
     alignItems: "flex-start",
     marginBottom: 14,
   },
@@ -134,37 +135,6 @@ export const styles = StyleSheet.create({
 
   robotIcon: {
     fontSize: 21,
-  },
-
-  robotBadge: {
-    borderRadius: 999,
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderWidth: 1,
-  },
-
-  robotBadgeAvailable: {
-    backgroundColor: "rgba(100,255,218,0.08)",
-    borderColor: "rgba(100,255,218,0.25)",
-  },
-
-  robotBadgeUnavailable: {
-    backgroundColor: "rgba(143,144,151,0.12)",
-    borderColor: COLORS.border,
-  },
-
-  robotBadgeText: {
-    fontSize: 10,
-    fontWeight: "800",
-    letterSpacing: 1,
-  },
-
-  robotBadgeTextAvailable: {
-    color: "#64FFDA",
-  },
-
-  robotBadgeTextUnavailable: {
-    color: COLORS.textSecondary,
   },
 
   robotName: {

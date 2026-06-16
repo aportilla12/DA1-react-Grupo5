@@ -68,12 +68,11 @@ export default function LoginScreen({ navigation }) {
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
           <View style={styles.fieldGroup}>
-            <Text style={styles.label}>@ USUARIO O EMAIL</Text>
+            <Text style={styles.label}>USUARIO O EMAIL</Text>
             <View style={styles.inputWrapper}>
-              <Text style={styles.inputIcon}>👤</Text>
               <TextInput
                 style={styles.input}
-                placeholder="admin@unitree.tech"
+                placeholder="Nombre de usuario o email"
                 placeholderTextColor="#666a73"
                 value={email}
                 onChangeText={setEmail}
@@ -85,10 +84,8 @@ export default function LoginScreen({ navigation }) {
           </View>
 
           <View style={styles.fieldGroup}>
-            <Text style={styles.label}>🔒 CONTRASEÑA</Text>
+            <Text style={styles.label}>CONTRASEÑA</Text>
             <View style={styles.inputWrapper}>
-              <Text style={styles.inputIcon}>🔑</Text>
-
               <TextInput
                 style={styles.input}
                 placeholder="••••••••"
@@ -143,12 +140,6 @@ export default function LoginScreen({ navigation }) {
           <TouchableOpacity onPress={() => navigation.navigate("Registro")}>
             <Text style={styles.footerLink}>Registrate</Text>
           </TouchableOpacity>
-        </View>
-
-        <View style={styles.securityRow}>
-          <Text style={styles.securityIcon}>🛡️</Text>
-          <Text style={styles.securityIcon}>⌾</Text>
-          <Text style={styles.securityIcon}>🔐</Text>
         </View>
       </View>
     </KeyboardAvoidingView>

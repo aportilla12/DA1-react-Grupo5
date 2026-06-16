@@ -12,7 +12,6 @@ import { useAuth, username } from "../context/AuthContext";
 import { useRobot } from "../context/RobotContext";
 import JoystickControl from "../components/JoystickControl";
 import { styles } from "../styles/movementStyles";
-import { saveCommandHistory } from "../services/api";
 
 import {
   moveRobot,

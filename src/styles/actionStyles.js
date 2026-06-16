@@ -79,20 +79,21 @@ export const styles = StyleSheet.create({
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
+    justifyContent: "space-between",
     gap: 12,
     marginBottom: 24,
   },
 
   actionButton: {
-    width: "49%",
-    height: 80,
+    width: "48%",
+    height: 82,
     backgroundColor: COLORS.surfaceLow,
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: RADIUS.md,
     alignItems: "center",
     justifyContent: "center",
-    padding: 12,
+    padding: 10,
   },
 
   actionButtonDisabled: {
