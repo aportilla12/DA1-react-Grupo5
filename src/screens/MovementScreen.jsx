@@ -98,14 +98,6 @@ export default function MovementScreen({ navigation }) {
       await moveRobot(token, vx, vy, vyaw);
       await recordCommand(label, true);
       setFeedback(`${label} enviado correctamente`);
-      await saveCommandHistory(
-        token,
-        robotType,
-        label,
-        "success",
-        `vx: ${vx.toFixed(2)}, vy: ${vy.toFixed(2)}`,
-        username
-      );
     } catch (e) {
       setFeedback(e.message || "Error al enviar movimiento");
     } finally {
@@ -124,13 +116,11 @@ export default function MovementScreen({ navigation }) {
       await commandFn(token);
       await recordCommand(label, true);
       setFeedback(`${label} enviado correctamente`);
-      await saveCommandHistory(token, robotType, label, "success", null, username);
 
       if (label === "Detener") {
         updateTelemetry(0, 0, 0, "Detenido");
       }
     } catch (e) {
-      await saveCommandHistory(token, robotType, label, "failed", e.message, username);
       setFeedback(e.message || `Error al ejecutar ${label}`);
     } finally {
       setLoading(false);
@@ -148,16 +138,8 @@ export default function MovementScreen({ navigation }) {
       await commandFn(token, enable);
       await recordCommand(label, true);
       setFeedback(`${label} enviado correctamente`);
-      await saveCommandHistory(
-        token,
-        robotType,
-        label,
-        "success",
-        enable ? "Activado" : "Desactivado",
-        username
-      );
+
     } catch (e) {
-      await saveCommandHistory(token, robotType, label, "failed", e.message, username);
       setFeedback(e.message || `Error al ejecutar ${label}`);
     } finally {
       setLoading(false);
